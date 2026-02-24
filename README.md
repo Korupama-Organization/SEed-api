@@ -1,5 +1,5 @@
 # . Backend
-This is the backend of the . MERN project.
+This is the backend of the studuy project.
 
 ## Setup
 

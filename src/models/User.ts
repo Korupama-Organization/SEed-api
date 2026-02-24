@@ -1,0 +1,73 @@
+import { Schema, model, Document, Types } from 'mongoose';
+
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
+export interface IBankAccount {
+    bankName?: string;
+    number?: string;
+}
+
+export interface ITeacherProfile {
+    bio?: string;
+    expertise?: string[];
+    bankAccount?: IBankAccount;
+}
+
+export interface IUser extends Document {
+    fullName: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: 'student' | 'teacher' | 'admin';
+    avatar?: string;
+    /** Authentication provider: 'local' | 'google' | 'facebook' */
+    authProvider: string;
+    isBlocked: boolean;
+    teacherProfile?: ITeacherProfile;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// ─── Schema ───────────────────────────────────────────────────────────────────
+
+const BankAccountSchema = new Schema<IBankAccount>(
+    {
+        bankName: String,
+        number: String,
+    },
+    { _id: false }
+);
+
+const TeacherProfileSchema = new Schema<ITeacherProfile>(
+    {
+        bio: String,
+        expertise: [String],
+        bankAccount: BankAccountSchema,
+    },
+    { _id: false }
+);
+
+const UserSchema = new Schema<IUser>(
+    {
+        fullName: { type: String, required: true },
+        email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+        phone: { type: String, required: true , unique: true},
+        password: { type: String, required: true, select: false }, // Excluded from queries by default
+        role: {
+            type: String,
+            enum: ['student', 'teacher', 'admin'],
+            default: 'student',
+        },
+        avatar: String,
+        authProvider: { type: String, default: 'local' },
+        isBlocked: { type: Boolean, default: false },
+        teacherProfile: TeacherProfileSchema,
+    },
+    { timestamps: true }
+);
+
+// Index for text search on fullName and email
+UserSchema.index({ email: 1 });
+UserSchema.index({ role: 1 });
+
+export const User = model<IUser>('User', UserSchema);
