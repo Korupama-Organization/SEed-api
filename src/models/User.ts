@@ -51,7 +51,7 @@ const UserSchema = new Schema<IUser>(
     {
         fullName: { type: String, required: true },
         email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-        phone: { type: String, required: true , unique: true},
+        phone: { type: String, required: true, unique: true },
         password: { type: String, required: true, select: false }, // Excluded from queries by default
         role: {
             type: String,
@@ -66,8 +66,8 @@ const UserSchema = new Schema<IUser>(
     { timestamps: true }
 );
 
-// Index for text search on fullName and email
-UserSchema.index({ email: 1 });
+// Note: email index is auto-created by unique: true in the schema
 UserSchema.index({ role: 1 });
+
 
 export const User = model<IUser>('User', UserSchema);
