@@ -27,6 +27,7 @@ export interface IScormCourseDraftChapter {
 
 export interface IScormCourseDraft extends Document {
     courseId: string;
+    teacherId?: string;
     courseInfo: {
         title: string;
         subtitle?: string;
@@ -95,6 +96,7 @@ const ChapterSchema = new Schema<IScormCourseDraftChapter>(
 const ScormCourseDraftSchema = new Schema<IScormCourseDraft>(
     {
         courseId: { type: String, required: true, unique: true, index: true },
+        teacherId: { type: String, index: true },
         courseInfo: {
             title: { type: String, required: true },
             subtitle: String,
