@@ -31,12 +31,13 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 import authRoutes from './routes/auth.routes';
+import courseRoutes from './routes/course.routes';
 import uploadRoutes from './routes/upload.routes';
 
 // ── TODO: Register routes ─────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
 app.use('/api/uploads', uploadRoutes);
-// app.use('/api/courses', courseRoutes);
 // app.use('/api/lessons', lessonRoutes);
 // app.use('/api/orders',  orderRoutes);
 

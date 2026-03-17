@@ -13,6 +13,14 @@ export type { ICourse, IModule, ILessonRef } from './Course';
 export { Lesson } from './Lesson';
 export type { ILesson, IInteractivePoint, IQuizData, IVideoConfig } from './Lesson';
 
+export { ScormCourseDraft } from './ScormCourseDraft';
+export type {
+	IScormCourseDraft,
+	IScormCourseDraftAsset,
+	IScormCourseDraftChapter,
+	IScormCourseDraftQuestion,
+} from './ScormCourseDraft';
+
 export { Enrollment } from './Enrollment';
 export type { IEnrollment, ILessonProgress, ICompletedInteraction } from './Enrollment';
 
