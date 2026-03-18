@@ -45,6 +45,7 @@ export const APP_CONFIG = {
 	smtpFromName: process.env.SMTP_FROM_NAME || 'Studuy',
 	smtpFromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@studuy.local',
 	appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
+	payosWebhookUrl: process.env.PAYOS_WEBHOOK_URL || '',
 };
 
 export const REDIS_KEYS = {
