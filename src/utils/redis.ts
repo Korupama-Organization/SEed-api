@@ -3,7 +3,7 @@ import { APP_CONFIG } from '../constants';
 
 let redisClient: RedisClientType | null = null;
 
-const getRedisClient = (): RedisClientType => {
+export const getRedisClient = (): RedisClientType => {
     if (!redisClient) {
         redisClient = createClient({
             username: APP_CONFIG.redisUsername,
@@ -22,7 +22,7 @@ const getRedisClient = (): RedisClientType => {
     return redisClient;
 };
 
-const ensureConnected = async (): Promise<RedisClientType> => {
+export const ensureConnected = async (): Promise<RedisClientType> => {
     const client = getRedisClient();
 
     if (!client.isOpen) {

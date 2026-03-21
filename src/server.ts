@@ -5,6 +5,7 @@ import cors from 'cors';
 import connectDB from './db/connect';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './utils/swagger';
+import { validateRequiredEnv } from './utils/env-validation';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 const start = async () => {
+    validateRequiredEnv();
     await connectDB();
     app.listen(PORT, () => {
         console.log(`Server is up and running at http://localhost:${PORT} `);
@@ -47,3 +49,4 @@ const start = async () => {
 };
 
 start();
+

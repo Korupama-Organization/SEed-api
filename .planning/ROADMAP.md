@@ -8,8 +8,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-auth-security-hardening-01-PLAN.md - Role policy middleware + fail-fast env validation hardening
-- [ ] 01-auth-security-hardening-02-PLAN.md - Redis per-email rate limiting + security-critical hybrid tests
+- [x] 01-auth-security-hardening-01-PLAN.md - Role policy middleware + fail-fast env validation hardening
+- [x] 01-auth-security-hardening-02-PLAN.md - Redis per-email rate limiting + security-critical hybrid tests
 
 ### Phase 2: Auth Test Suite & Verification
 **Goal:** Add comprehensive auth test coverage and verification workflows.
@@ -42,3 +42,4 @@ Plans:
 
 Plans:
 - [ ] 05-mvp-stability-polish-01-PLAN.md - [To be planned]
+

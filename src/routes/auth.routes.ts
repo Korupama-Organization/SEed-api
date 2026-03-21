@@ -10,6 +10,8 @@ import {
 	verifyEmailOtp,
 	verifyForgotPasswordOtp,
 } from '../controllers/auth.controller';
+import { enforceRegistrationRolePolicy } from '../middlewares/registration-role-policy.middleware';
+import { authRateLimiter } from '../middlewares/auth-rate-limit.middleware';
 
 const router = Router();
 
@@ -51,7 +53,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/register', registerUser);
+router.post('/register', authRateLimiter, enforceRegistrationRolePolicy, registerUser);
 
 /**
  * @swagger
@@ -123,7 +125,7 @@ router.post('/verify-email', verifyEmailOtp);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/resend-verify-email-otp', resendVerifyEmailOtp);
+router.post('/resend-verify-email-otp', authRateLimiter, resendVerifyEmailOtp);
 
 /**
  * @swagger
@@ -165,7 +167,7 @@ router.post('/resend-verify-email-otp', resendVerifyEmailOtp);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/login', loginUser);
+router.post('/login', authRateLimiter, loginUser);
 
 /**
  * @swagger
@@ -225,7 +227,7 @@ router.post('/refresh', refreshAccessToken);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/forgot-password', requestForgotPassword);
+router.post('/forgot-password', authRateLimiter, requestForgotPassword);
 
 /**
  * @swagger
@@ -291,7 +293,7 @@ router.post('/verify-forgot-password-otp', verifyForgotPasswordOtp);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/resend-forgot-password-otp', resendForgotPasswordOtp);
+router.post('/resend-forgot-password-otp', authRateLimiter, resendForgotPasswordOtp);
 
 /**
  * @swagger
@@ -327,7 +329,9 @@ router.post('/resend-forgot-password-otp', resendForgotPasswordOtp);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', authRateLimiter, resetPassword);
 
 export default router;
+
+
 
