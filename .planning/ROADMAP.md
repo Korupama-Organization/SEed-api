@@ -26,8 +26,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-domain-routes-wiring-01-PLAN.md - Course/Lesson route wiring with auth and ownership guards
-- [ ] 03-domain-routes-wiring-02-PLAN.md - Enrollment/Order route wiring plus Swagger contract completion
+- [x] 03-domain-routes-wiring-01-PLAN.md - Course/Lesson route wiring with auth and ownership guards
+- [x] 03-domain-routes-wiring-02-PLAN.md - Enrollment/Order route wiring plus Swagger contract completion
 
 ### Phase 4: Domain Logic & Validation
 **Goal:** Implement and validate core enrollment, progress, and credit domain logic.
@@ -44,6 +44,7 @@ Plans:
 
 Plans:
 - [ ] 05-mvp-stability-polish-01-PLAN.md - [To be planned]
+
 
 
 
