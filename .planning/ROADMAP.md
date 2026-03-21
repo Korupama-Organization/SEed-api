@@ -23,10 +23,11 @@ Plans:
 ### Phase 3: Domain Routes Wiring
 **Goal:** Wire and expose core domain routes for courses, lessons, enrollments, and orders.
 **Requirements:** [DOMAIN-ROUTE-01, DOMAIN-ROUTE-02, DOMAIN-ROUTE-03]
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-domain-routes-wiring-01-PLAN.md - [To be planned]
+- [ ] 03-domain-routes-wiring-01-PLAN.md - Course/Lesson route wiring with auth and ownership guards
+- [ ] 03-domain-routes-wiring-02-PLAN.md - Enrollment/Order route wiring plus Swagger contract completion
 
 ### Phase 4: Domain Logic & Validation
 **Goal:** Implement and validate core enrollment, progress, and credit domain logic.
@@ -43,6 +44,7 @@ Plans:
 
 Plans:
 - [ ] 05-mvp-stability-polish-01-PLAN.md - [To be planned]
+
 
 
 
