@@ -44,8 +44,9 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-mvp-stability-polish-01-PLAN.md - MVP smoke automation and UAT checklist
-- [ ] 05-mvp-stability-polish-02-PLAN.md - Operational readiness docs, error consistency checks, and verification
+- [x] 05-mvp-stability-polish-01-PLAN.md - MVP smoke automation and UAT checklist
+- [x] 05-mvp-stability-polish-02-PLAN.md - Operational readiness docs, error consistency checks, and verification
+
 
 
 

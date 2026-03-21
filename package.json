@@ -8,7 +8,8 @@
                     "build":  "tsc",
                     "test":  "jest",
                     "test:security":  "jest --runInBand tests/security",
-                    "test:coverage":  "jest --coverage --runInBand"
+                    "test:coverage":  "jest --coverage --runInBand",
+                    "test:smoke":  "jest --runInBand tests/smoke"
                 },
     "dependencies":  {
                          "bcrypt":  "^6.0.0",
