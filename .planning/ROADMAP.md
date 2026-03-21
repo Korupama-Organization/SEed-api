@@ -5,11 +5,11 @@
 ### Phase 1: Auth Security Hardening
 **Goal:** Eliminate privilege escalation and unsafe defaults in auth while adding abuse protection and focused security tests.
 **Requirements:** [AUTH-SEC-01, AUTH-SEC-02, AUTH-SEC-03, AUTH-SEC-04]
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-auth-security-hardening-01-PLAN.md - [To be planned]
-- [ ] 01-auth-security-hardening-02-PLAN.md - [To be planned]
+- [ ] 01-auth-security-hardening-01-PLAN.md - Role policy middleware + fail-fast env validation hardening
+- [ ] 01-auth-security-hardening-02-PLAN.md - Redis per-email rate limiting + security-critical hybrid tests
 
 ### Phase 2: Auth Test Suite & Verification
 **Goal:** Add comprehensive auth test coverage and verification workflows.
