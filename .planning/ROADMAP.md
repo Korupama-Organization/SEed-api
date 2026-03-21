@@ -41,10 +41,12 @@ Plans:
 ### Phase 5: MVP Stability & Polish
 **Goal:** Stabilize end-to-end behavior and finalize MVP operational readiness.
 **Requirements:** [MVP-STAB-01, MVP-STAB-02]
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-mvp-stability-polish-01-PLAN.md - [To be planned]
+- [ ] 05-mvp-stability-polish-01-PLAN.md - MVP smoke automation and UAT checklist
+- [ ] 05-mvp-stability-polish-02-PLAN.md - Operational readiness docs, error consistency checks, and verification
+
 
 
 
