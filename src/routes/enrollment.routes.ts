@@ -65,7 +65,7 @@ router.get(
  * @swagger
  * /api/enrollments:
  *   post:
- *     summary: Create enrollment for current user
+ *     summary: Create enrollment for current user (published course only)
  *     tags: [Enrollments]
  *     security:
  *       - BearerAuth: []
@@ -74,6 +74,8 @@ router.get(
  *         description: Enrollment created
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Course is not published
  */
 router.post('/', requireAuth, createEnrollment);
 
@@ -98,6 +100,8 @@ router.post('/', requireAuth, createEnrollment);
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
+ *       409:
+ *         description: Sequential progression violated (lesson locked)
  */
 router.patch(
     '/:enrollmentId/progress',

@@ -65,13 +65,15 @@ router.get(
  * @swagger
  * /api/orders:
  *   post:
- *     summary: Create order for current user
+ *     summary: Create order for current user and debit credits
  *     tags: [Orders]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       201:
- *         description: Order created
+ *         description: Order created and paid by credit
+ *       400:
+ *         description: Invalid payload or insufficient credit balance
  *       401:
  *         description: Unauthorized
  */

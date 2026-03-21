@@ -35,8 +35,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-domain-logic-validation-01-PLAN.md - Enrollment and progress domain rules with sequencing validation
-- [ ] 04-domain-logic-validation-02-PLAN.md - Credit transaction/order logic integration and multi-step tests
+- [x] 04-domain-logic-validation-01-PLAN.md - Enrollment and progress domain rules with sequencing validation
+- [x] 04-domain-logic-validation-02-PLAN.md - Credit transaction/order logic integration and multi-step tests
 
 ### Phase 5: MVP Stability & Polish
 **Goal:** Stabilize end-to-end behavior and finalize MVP operational readiness.
@@ -45,6 +45,7 @@ Plans:
 
 Plans:
 - [ ] 05-mvp-stability-polish-01-PLAN.md - [To be planned]
+
 
 
 
