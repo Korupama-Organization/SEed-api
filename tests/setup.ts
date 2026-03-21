@@ -8,4 +8,4 @@ process.env.SMTP_PASS = process.env.SMTP_PASS || 'test-pass';
 process.env.REDIS_HOST = process.env.REDIS_HOST || '127.0.0.1';
 process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
 process.env.AUTH_RATE_LIMIT_WINDOW_SECONDS = process.env.AUTH_RATE_LIMIT_WINDOW_SECONDS || '60';
-process.env.AUTH_RATE_LIMIT_MAX_REQUESTS = process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || '2';
+process.env.AUTH_RATE_LIMIT_MAX_REQUESTS = process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || '100';

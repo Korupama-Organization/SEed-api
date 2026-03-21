@@ -17,8 +17,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-auth-test-suite-verification-01-PLAN.md - Auth unit test matrix for controller, middleware, and JWT utility
-- [ ] 02-auth-test-suite-verification-02-PLAN.md - Auth integration tests + coverage thresholds + CI enforcement
+- [x] 02-auth-test-suite-verification-01-PLAN.md - Auth unit test matrix for controller, middleware, and JWT utility
+- [x] 02-auth-test-suite-verification-02-PLAN.md - Auth integration tests + coverage thresholds + CI enforcement
 
 ### Phase 3: Domain Routes Wiring
 **Goal:** Wire and expose core domain routes for courses, lessons, enrollments, and orders.
@@ -43,5 +43,6 @@ Plans:
 
 Plans:
 - [ ] 05-mvp-stability-polish-01-PLAN.md - [To be planned]
+
 
 
