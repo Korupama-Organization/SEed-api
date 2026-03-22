@@ -74,7 +74,7 @@ Output: Join controller/routes, redis-backed device lock service, attendance/aud
 @.planning/STATE.md
 @.planning/phases/06-livestream-foundation-access-control/06-CONTEXT.md
 @.planning/phases/06-livestream-foundation-access-control/06-RESEARCH.md
-@.planning/phases/06-livestream-foundation-access-control/06-livestream-foundation-access-control-01-SUMMARY.md
+@.planning/phases/06-livestream-foundation-access-control/06-livestream-foundation-access-control-01-PLAN.md
 @src/models/Enrollment.ts
 @src/models/Order.ts
 @src/utils/redis.ts
