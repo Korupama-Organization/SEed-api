@@ -64,8 +64,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-livestream-foundation-access-control-01-PLAN.md - Teacher lifecycle control endpoints + LiveKit adapter foundation
-- [ ] 06-livestream-foundation-access-control-02-PLAN.md - Join authorization, single-device enforcement, and access integration tests
+- [x] 06-livestream-foundation-access-control-01-PLAN.md - Teacher lifecycle control endpoints + LiveKit adapter foundation
+- [x] 06-livestream-foundation-access-control-02-PLAN.md - Join authorization, single-device enforcement, and access integration tests
 
 ### Phase 7: Realtime Session Experience
 **Goal:** Deliver core in-session controls and student viewing experience for active livestream classes.
