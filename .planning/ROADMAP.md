@@ -55,3 +55,33 @@ Plans:
 
 
 
+
+## Milestone 1.1 - Teacher Video Livestreaming
+
+### Phase 6: Livestream Foundation & Access Control
+**Goal:** Introduce teacher-only livestream creation and strict role-aware access control.
+**Requirements:** [LIVE-01, LIVE-02, LIVE-03]
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-livestream-foundation-access-control-01-PLAN.md - Teacher lifecycle control endpoints + Owncast adapter foundation
+- [ ] 06-livestream-foundation-access-control-02-PLAN.md - Join authorization, single-device enforcement, and access integration tests
+
+### Phase 7: Realtime Session Experience
+**Goal:** Deliver core in-session controls and student viewing experience for active livestream classes.
+**Requirements:** [LIVE-04, LIVE-05, LIVE-06]
+**Plans:** 2 plans
+
+Plans:
+- [ ] 07-realtime-session-experience-01-PLAN.md - [To be planned]
+- [ ] 07-realtime-session-experience-02-PLAN.md - [To be planned]
+
+### Phase 8: Livestream Reliability & Compliance
+**Goal:** Verify livestream correctness, document operations, and enforce CI quality gates.
+**Requirements:** [LIVE-07, LIVE-08, LIVE-09]
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-livestream-reliability-compliance-01-PLAN.md - [To be planned]
+- [ ] 08-livestream-reliability-compliance-02-PLAN.md - [To be planned]
+

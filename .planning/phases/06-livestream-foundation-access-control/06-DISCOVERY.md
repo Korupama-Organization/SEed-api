@@ -1,0 +1,24 @@
+# 06 Discovery - Owncast Livestream Foundation
+
+## Discovery Level
+Level 2 (standard research) due to new external integration (Owncast) not present in existing stack.
+
+## What Was Evaluated
+- Existing auth and enrollment authorization patterns in current backend
+- Current infrastructure integrations and configuration handling
+- Owncast documentation for configuration model and operational assumptions
+
+## Decision
+Use Owncast as locked livestream backend for milestone 1.1 phase 06.
+
+## Must-Keep Constraints
+- Teacher-only control actions
+- Join only after teacher start
+- No join after explicit teacher end
+- Public/private access mode per stream
+- Single-device active participation per user
+
+## Discovery Output for Planning
+- Plan must include Owncast adapter layer and avoid provider logic in controllers.
+- Plan must include explicit user_setup frontmatter for self-hosted Owncast credentials and host config.
+- Plan must include integration tests covering lifecycle and access policy truths.
