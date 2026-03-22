@@ -9,3 +9,7 @@ process.env.REDIS_HOST = process.env.REDIS_HOST || '127.0.0.1';
 process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
 process.env.AUTH_RATE_LIMIT_WINDOW_SECONDS = process.env.AUTH_RATE_LIMIT_WINDOW_SECONDS || '60';
 process.env.AUTH_RATE_LIMIT_MAX_REQUESTS = process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || '100';
+
+process.env.LIVEKIT_URL = process.env.LIVEKIT_URL || 'wss://livekit.test';
+process.env.LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || 'test-livekit-key';
+process.env.LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || 'test-livekit-secret';

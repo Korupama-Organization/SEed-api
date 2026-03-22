@@ -8,6 +8,9 @@ const REQUIRED_ENV_VARS = [
     'SMTP_PASS',
     'REDIS_HOST',
     'REDIS_PORT',
+    'LIVEKIT_URL',
+    'LIVEKIT_API_KEY',
+    'LIVEKIT_API_SECRET',
 ] as const;
 
 export const validateRequiredEnv = (): void => {

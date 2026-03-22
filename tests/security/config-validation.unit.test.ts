@@ -10,6 +10,9 @@ const REQUIRED_KEYS = [
   'SMTP_PASS',
   'REDIS_HOST',
   'REDIS_PORT',
+  'LIVEKIT_URL',
+  'LIVEKIT_API_KEY',
+  'LIVEKIT_API_SECRET',
 ] as const;
 
 describe('validateRequiredEnv', () => {

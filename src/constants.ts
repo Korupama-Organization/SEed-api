@@ -39,6 +39,11 @@ export const APP_CONFIG = {
     smtpFromName: process.env.SMTP_FROM_NAME || 'Studuy',
     smtpFromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@studuy.local',
     appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
+    livekitUrl: process.env.LIVEKIT_URL || '',
+    livekitApiKey: process.env.LIVEKIT_API_KEY || '',
+    livekitApiSecret: process.env.LIVEKIT_API_SECRET || '',
+    livekitTokenTtl: process.env.LIVEKIT_TOKEN_TTL || '15m',
+    livestreamLockTtlSeconds: asNumber(process.env.LIVESTREAM_LOCK_TTL_SECONDS, 120),
 };
 
 export const REDIS_KEYS = {
@@ -46,4 +51,5 @@ export const REDIS_KEYS = {
     verifyEmailCooldown: (email: string) => `auth:verify-email:cooldown:${email.toLowerCase()}`,
     forgotPasswordOtp: (email: string) => `auth:forgot-password:otp:${email.toLowerCase()}`,
     forgotPasswordCooldown: (email: string) => `auth:forgot-password:cooldown:${email.toLowerCase()}`,
+    livestreamActiveSession: (sessionId: string, userId: string) => `livestream:active:${sessionId}:${userId}`,
 };

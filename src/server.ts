@@ -7,6 +7,7 @@ import courseRoutes from './routes/course.routes';
 import creditTransactionRoutes from './routes/credit-transaction.routes';
 import enrollmentRoutes from './routes/enrollment.routes';
 import lessonRoutes from './routes/lesson.routes';
+import livestreamRoutes from './routes/livestream.routes';
 import orderRoutes from './routes/order.routes';
 import { validateRequiredEnv } from './utils/env-validation';
 import swaggerSpec from './utils/swagger';
@@ -41,6 +42,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/livestreams', livestreamRoutes);
 app.use('/api/credit-transactions', creditTransactionRoutes);
 
 const start = async () => {
