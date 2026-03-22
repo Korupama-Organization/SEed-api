@@ -31,8 +31,8 @@ Phase 6 delivers teacher-only livestream session creation and access control gat
 - **D-08:** Use minimum viable audit event capture in phase 6; deeper analytics and observability remain for later phases.
 
 ### Streaming platform
-- **D-09:** Livestream provider is locked to Owncast (self-hosted) for phase 6 and milestone 1.1 scope.
-- **D-10:** Phase 6 planning and implementation must integrate with Owncast APIs/stream lifecycle rather than introducing an alternative provider.
+- **D-09:** Livestream provider is locked to LiveKit for phase 6 and milestone 1.1 scope.
+- **D-10:** Phase 6 planning and implementation must integrate with LiveKit room/token lifecycle rather than introducing an alternative provider.
 
 ### the agent's Discretion
 - Exact endpoint naming and request/response payload design (must stay consistent with existing API style).
@@ -49,7 +49,7 @@ Phase 6 delivers teacher-only livestream session creation and access control gat
 - "Of course, anyone can rejoin."
 - "Single device only."
 - "Fastest path" selected for unresolved defaults.
-- "Use Owncast, a self-hosted live stream server with chat features."
+- "Use LiveKit instead of Owncast."
 </specifics>
 
 <canonical_refs>

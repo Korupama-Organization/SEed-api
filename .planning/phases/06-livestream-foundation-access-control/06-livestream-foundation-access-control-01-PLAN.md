@@ -7,7 +7,7 @@ depends_on: []
 files_modified:
   - src/constants.ts
   - src/models/LivestreamSession.ts
-  - src/services/owncast/owncast-client.ts
+  - src/services/livekit/livekit-client.ts
   - src/controllers/livestream.lifecycle.controller.ts
   - src/routes/livestream.routes.ts
   - src/server.ts
@@ -17,18 +17,18 @@ requirements:
   - LIVE-01
   - LIVE-02
 user_setup:
-  - service: owncast
-    why: "Phase 06 lifecycle endpoints must synchronize stream state with Owncast"
+  - service: livekit
+    why: "Phase 06 lifecycle endpoints must synchronize room/token lifecycle with LiveKit"
     env_vars:
-      - name: OWNCAST_BASE_URL
-        source: "Owncast deployment URL (self-hosted endpoint)"
-      - name: OWNCAST_ADMIN_TOKEN
-        source: "Owncast admin credential/token configured in Owncast admin"
-      - name: OWNCAST_STREAM_KEY
-        source: "Owncast stream key from /admin/config/server"
+      - name: LIVEKIT_URL
+        source: "LiveKit websocket/base URL for your deployment"
+      - name: LIVEKIT_API_KEY
+        source: "LiveKit project/server API key"
+      - name: LIVEKIT_API_SECRET
+        source: "LiveKit project/server API secret"
     dashboard_config:
-      - task: "Rotate default Owncast admin password and stream key"
-        location: "Owncast /admin/config/server"
+      - task: "Create LiveKit project/server credentials with server-side room management permissions"
+        location: "LiveKit Cloud project settings or self-hosted server config"
 must_haves:
   truths:
     - "Teacher can create, schedule, start, end, and cancel a livestream session"
@@ -41,25 +41,25 @@ must_haves:
     - path: "src/controllers/livestream.lifecycle.controller.ts"
       provides: "Teacher control endpoints and role gating"
       exports: ["createLivestream", "startLivestream", "endLivestream", "cancelLivestream"]
-    - path: "src/services/owncast/owncast-client.ts"
-      provides: "Owncast API adapter layer"
-      exports: ["syncStart", "syncEnd", "syncCreate", "syncCancel"]
+    - path: "src/services/livekit/livekit-client.ts"
+      provides: "LiveKit adapter layer"
+      exports: ["ensureRoom", "closeRoom", "mintTeacherToken", "mintViewerToken"]
   key_links:
     - from: "src/routes/livestream.routes.ts"
       to: "src/controllers/livestream.lifecycle.controller.ts"
       via: "teacher-only protected route bindings"
       pattern: "router\.(post|patch|delete).*livestream"
     - from: "src/controllers/livestream.lifecycle.controller.ts"
-      to: "src/services/owncast/owncast-client.ts"
+      to: "src/services/livekit/livekit-client.ts"
       via: "provider synchronization call"
-      pattern: "owncast.*sync(Start|End|Create|Cancel)"
+      pattern: "livekit.*(ensureRoom|closeRoom|mint)"
 ---
 
 <objective>
-Deliver phase 06 lifecycle foundation by adding teacher-only livestream control endpoints and Owncast synchronization.
+Deliver phase 06 lifecycle foundation by adding teacher-only livestream control endpoints and LiveKit synchronization.
 
 Purpose: Satisfy LIVE-01 and LIVE-02 while establishing provider-safe integration boundaries for phase 07.
-Output: Lifecycle model, Owncast adapter, protected lifecycle routes, and lifecycle integration tests.
+Output: Lifecycle model, LiveKit adapter, protected lifecycle routes, and lifecycle integration tests.
 </objective>
 
 <execution_context>
@@ -120,18 +120,18 @@ app.use('/api/credit-transactions', creditTransactionRoutes);
 </task>
 
 <task type="auto" tdd="true">
-  <name>Task 2: Implement teacher-only lifecycle endpoints with Owncast adapter</name>
-  <files>src/constants.ts, src/services/owncast/owncast-client.ts, src/controllers/livestream.lifecycle.controller.ts, src/routes/livestream.routes.ts, src/server.ts, tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts</files>
+  <name>Task 2: Implement teacher-only lifecycle endpoints with LiveKit adapter</name>
+  <files>src/constants.ts, src/services/livekit/livekit-client.ts, src/controllers/livestream.lifecycle.controller.ts, src/routes/livestream.routes.ts, src/server.ts, tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts</files>
   <behavior>
     - Test 1: Teacher can call create/start/end/cancel endpoints and receives success responses.
-    - Test 2: Student/admin? control attempts return 403 (per LIVE-02 and D-06 role policy context).
-    - Test 3: Start/end/cancel handlers invoke Owncast adapter sync methods once per transition.
+    - Test 2: Non-teacher control attempts return 403 (per LIVE-02).
+    - Test 3: Start/end/cancel handlers invoke LiveKit adapter methods once per transition.
   </behavior>
-  <action>Add OWNCAST_* config bindings in src/constants.ts with fail-fast validation style consistent with existing startup checks. Build owncast-client adapter methods and call them from lifecycle controller transitions. Wire new /api/livestreams routes into src/server.ts with requireAuth + teacher role guard behavior per D-09 and D-10.</action>
+  <action>Add LIVEKIT_* config bindings in src/constants.ts with fail-fast validation style consistent with existing startup checks. Build livekit-client adapter methods and call them from lifecycle controller transitions. Wire new /api/livestreams routes into src/server.ts with requireAuth + teacher role guard behavior per D-09 and D-10.</action>
   <verify>
     <automated>npm run test -- tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts --runInBand</automated>
   </verify>
-  <done>Teacher-only lifecycle API is mounted, role restrictions are enforced, and Owncast calls are isolated behind adapter functions.</done>
+  <done>Teacher-only lifecycle API is mounted, role restrictions are enforced, and LiveKit calls are isolated behind adapter functions.</done>
 </task>
 
 </tasks>
@@ -144,7 +144,7 @@ app.use('/api/credit-transactions', creditTransactionRoutes);
 <success_criteria>
 - LIVE-01 complete: teacher lifecycle endpoints operational with persisted transitions.
 - LIVE-02 complete: non-teacher control attempts blocked consistently.
-- Owncast integration is encapsulated and environment contract is explicit.
+- LiveKit integration is encapsulated and environment contract is explicit.
 </success_criteria>
 
 <output>

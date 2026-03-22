@@ -11,7 +11,7 @@ Out of scope:
 - Reliability/compliance hardening (phase 08)
 
 ## Locked Decisions from Context
-- Provider locked: Owncast (self-hosted) (D-09, D-10)
+- Provider locked: LiveKit (D-09, D-10)
 - Students join only after teacher starts stream (D-01)
 - Explicit teacher end closes stream to future joins (D-02)
 - Authorized rejoin allowed while active (D-03)
@@ -25,26 +25,26 @@ Out of scope:
 - Existing Redis utilities suitable for ephemeral session lock keys: src/utils/redis.ts
 - Existing error contract: { error: string }
 
-## Owncast Integration Findings
-- Owncast is self-hosted and configured primarily from /admin.
-- Default web and RTMP ports are exposed and configurable.
-- Stream key and admin credentials are distinct and must be rotated from defaults.
-- Owncast supports extensibility and third-party API usage, but endpoint usage must be verified against current Owncast API docs for the deployed version.
+## LiveKit Integration Findings
+- LiveKit is room/token based and supports server-generated access grants.
+- Backend typically mints join tokens using API key + secret.
+- Room lifecycle can be managed via server SDK or REST, while media transport happens directly between client and LiveKit.
+- Provider credentials should remain server-side only.
 
 ## Recommended Integration Pattern for Phase 06
-1. Treat Owncast as infrastructure backend managed through a dedicated adapter service in this codebase.
+1. Treat LiveKit as infrastructure backend managed through a dedicated adapter service in this codebase.
 2. Keep provider calls isolated behind service methods so phase 07/08 can evolve without controller rewrites.
-3. Persist canonical session state in app DB; do not infer app authorization solely from Owncast state.
+3. Persist canonical session state in app DB; do not infer app authorization solely from provider room state.
 4. Use Redis lock keys for single-device active join enforcement and fast rejoin checks.
-5. Keep chat-specific behavior deferred to phase 07 unless required for access control.
+5. Keep advanced media/chat controls deferred to phase 07 unless required for access control.
 
 ## Risks and Mitigations
-- Risk: Owncast API drift by version.
-  - Mitigation: isolate calls in one service, add integration contract tests with mocked provider responses.
-- Risk: mismatch between app session state and provider state.
+- Risk: LiveKit credential leakage.
+  - Mitigation: keep API secret only in server env and never expose to clients.
+- Risk: mismatch between app session state and provider room state.
   - Mitigation: explicit lifecycle transitions and audit event writes in same app transaction boundary.
-- Risk: default Owncast credentials in non-dev environments.
-  - Mitigation: require explicit env vars and runbook checklist in phase 08.
+- Risk: token expiry vs rejoin UX mismatch.
+  - Mitigation: define phase 06 token TTL policy and reissue path on authorized rejoin.
 
 ## Validation Architecture
 - Unit tests:
@@ -58,7 +58,7 @@ Out of scope:
   - rejoin allowed while active and blocked after end
 
 ## Manual Setup Required (Human)
-- Deploy and run Owncast instance (self-hosted)
-- Set and rotate Owncast admin password and stream key
-- Provide app env vars for Owncast base URL and admin/API auth material
-- Configure network/proxy/TLS for Owncast endpoints
+- Deploy or provision LiveKit server/cloud project
+- Generate and store LiveKit API key and secret
+- Provide app env vars for LiveKit host URL and credentials
+- Configure network/proxy/TLS for LiveKit endpoints

@@ -3,7 +3,8 @@ phase: 06-livestream-foundation-access-control
 plan: 02
 type: execute
 wave: 2
-depends_on:`n  - 06-livestream-foundation-access-control-01
+depends_on:
+  - 06-livestream-foundation-access-control-01
 files_modified:
   - src/models/LivestreamAttendance.ts
   - src/services/livestream/session-lock.service.ts
@@ -15,14 +16,18 @@ autonomous: true
 requirements:
   - LIVE-03
 user_setup:
-  - service: owncast
-    why: "Join URLs/embed targets must map to reachable Owncast stream endpoint"
+  - service: livekit
+    why: "Join token and room URLs must map to reachable LiveKit deployment"
     env_vars:
-      - name: OWNCAST_PUBLIC_PLAYBACK_URL
-        source: "Public URL students use to watch stream"
+      - name: LIVEKIT_URL
+        source: "LiveKit URL reachable by app and clients"
+      - name: LIVEKIT_API_KEY
+        source: "LiveKit API key for token minting"
+      - name: LIVEKIT_API_SECRET
+        source: "LiveKit API secret for token minting"
     dashboard_config:
-      - task: "Ensure Owncast stream is externally reachable by student clients"
-        location: "Owncast deployment network/proxy configuration"
+      - task: "Ensure LiveKit deployment is externally reachable by student clients"
+        location: "LiveKit network/proxy configuration"
 must_haves:
   truths:
     - "Students can join only when teacher has started the session"
@@ -147,4 +152,3 @@ export const Order = model<IOrder>('Order', OrderSchema);
 <output>
 After completion, create `.planning/phases/06-livestream-foundation-access-control/06-livestream-foundation-access-control-02-SUMMARY.md`
 </output>
-

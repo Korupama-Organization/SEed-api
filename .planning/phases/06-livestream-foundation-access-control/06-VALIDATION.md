@@ -11,8 +11,6 @@ created: 2026-03-22
 
 > Per-phase validation contract for feedback sampling during execution.
 
----
-
 ## Test Infrastructure
 
 | Property | Value |
@@ -23,8 +21,6 @@ created: 2026-03-22
 | **Full suite command** | `npm run test:coverage` |
 | **Estimated runtime** | ~120 seconds |
 
----
-
 ## Sampling Rate
 
 - **After every task commit:** Run `npm run test -- tests/livestream --runInBand`
@@ -32,34 +28,24 @@ created: 2026-03-22
 - **Before /gsd-verify-work:** Full suite must be green
 - **Max feedback latency:** 120 seconds
 
----
-
 ## Per-Task Verification Map
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 06-01-01 | 01 | 1 | LIVE-01 | integration | `npm run test -- tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts --runInBand` | ✅ | ⬜ pending |
-| 06-01-02 | 01 | 1 | LIVE-02 | integration | `npm run test -- tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts --runInBand` | ✅ | ⬜ pending |
-| 06-02-01 | 02 | 2 | LIVE-03 | integration | `npm run test -- tests/livestream/access/livestream.join.integration.test.ts --runInBand` | ✅ | ⬜ pending |
-| 06-02-02 | 02 | 2 | LIVE-03 | integration | `npm run test -- tests/livestream/access/livestream.join.integration.test.ts --runInBand` | ✅ | ⬜ pending |
-
-*Status: ⬜ pending · ✅ green · ⌁ red · ⚠ flaky*
-
----
+| 06-01-01 | 01 | 1 | LIVE-01 | integration | `npm run test -- tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts --runInBand` | ? | ? pending |
+| 06-01-02 | 01 | 1 | LIVE-02 | integration | `npm run test -- tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts --runInBand` | ? | ? pending |
+| 06-02-01 | 02 | 2 | LIVE-03 | integration | `npm run test -- tests/livestream/access/livestream.join.integration.test.ts --runInBand` | ? | ? pending |
+| 06-02-02 | 02 | 2 | LIVE-03 | integration | `npm run test -- tests/livestream/access/livestream.join.integration.test.ts --runInBand` | ? | ? pending |
 
 ## Wave 0 Requirements
 
 Existing infrastructure covers all phase requirements.
 
----
-
 ## Manual-Only Verifications
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Owncast host/network reachability and admin credential validity | LIVE-01/LIVE-03 | External self-hosted service cannot be fully validated in isolated test runtime | Verify Owncast deployment is reachable from app runtime and admin credentials authorize provider operations |
-
----
+| LiveKit deployment reachability and credential validity | LIVE-01/LIVE-03 | External provider cannot be fully validated in isolated test runtime | Verify LiveKit URL is reachable from app runtime and API key/secret can mint valid room join tokens |
 
 ## Validation Sign-Off
 
