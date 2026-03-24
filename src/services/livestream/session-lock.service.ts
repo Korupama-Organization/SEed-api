@@ -6,6 +6,8 @@ interface JoinLockResult {
     rejoin: boolean;
 }
 
+const RECONNECT_GRACE_SECONDS = APP_CONFIG.livestreamLockTtlSeconds;
+
 const buildKey = (livestreamId: string, userId: string): string => {
     return REDIS_KEYS.livestreamActiveSession(livestreamId, userId);
 };
@@ -17,7 +19,7 @@ export const acquireJoinLock = async (
 ): Promise<JoinLockResult> => {
     const key = buildKey(livestreamId, userId);
 
-    const created = await setTempValueIfAbsent(key, deviceId, APP_CONFIG.livestreamLockTtlSeconds);
+    const created = await setTempValueIfAbsent(key, deviceId, RECONNECT_GRACE_SECONDS);
     if (created) {
         return { allowed: true, rejoin: false };
     }
@@ -33,7 +35,7 @@ export const acquireJoinLock = async (
 
 export const refreshJoinLock = async (livestreamId: string, userId: string, deviceId: string): Promise<boolean> => {
     const key = buildKey(livestreamId, userId);
-    return refreshTempValueIfMatch(key, deviceId, APP_CONFIG.livestreamLockTtlSeconds);
+    return refreshTempValueIfMatch(key, deviceId, RECONNECT_GRACE_SECONDS);
 };
 
 export const releaseJoinLock = async (livestreamId: string, userId: string, deviceId: string): Promise<boolean> => {

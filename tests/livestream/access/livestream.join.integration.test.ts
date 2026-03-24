@@ -4,7 +4,7 @@ import livestreamRoutes from '../../../src/routes/livestream.routes';
 
 type SessionRow = {
     _id: string;
-    status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+    status: 'scheduled' | 'live' | 'paused' | 'ended' | 'cancelled';
     accessMode: 'public' | 'private';
     teacherId: string;
     livekitRoomName: string;
@@ -16,6 +16,7 @@ const livestreamFindById = jest.fn();
 const enrollmentFindOne = jest.fn();
 const orderFindOne = jest.fn();
 const attendanceCreate = jest.fn();
+const attendanceFindOne = jest.fn();
 
 jest.mock('../../../src/middlewares/auth.middleware', () => ({
     requireAuth: (req: any, res: any, next: any) => {
@@ -27,6 +28,11 @@ jest.mock('../../../src/middlewares/auth.middleware', () => ({
         const token = header.slice(7);
         if (token === 'student-token') {
             req.auth = { userId: 'student-1', role: 'student', payload: {} };
+            return next();
+        }
+
+        if (token === 'removed-student-token') {
+            req.auth = { userId: 'student-removed', role: 'student', payload: {} };
             return next();
         }
 
@@ -66,6 +72,7 @@ jest.mock('../../../src/models/Order', () => ({
 jest.mock('../../../src/models/LivestreamAttendance', () => ({
     LivestreamAttendance: {
         create: (...args: any[]) => attendanceCreate(...args),
+        findOne: (...args: any[]) => attendanceFindOne(...args),
     },
 }));
 
@@ -109,6 +116,14 @@ describe('livestream join access routes', () => {
             livekitRoomName: 'room-public-1',
         };
 
+        const pausedPublic: SessionRow = {
+            _id: 'paused-public-1',
+            status: 'paused',
+            accessMode: 'public',
+            teacherId: 'teacher-1',
+            livekitRoomName: 'room-paused-1',
+        };
+
         const scheduledPublic: SessionRow = {
             _id: 'scheduled-public-1',
             status: 'scheduled',
@@ -134,7 +149,7 @@ describe('livestream join access routes', () => {
             courseId: 'course-1',
         };
 
-        [livePublic, scheduledPublic, endedPublic, privateLive].forEach((row) => {
+        [livePublic, pausedPublic, scheduledPublic, endedPublic, privateLive].forEach((row) => {
             sessions.set(row._id, row);
         });
 
@@ -154,15 +169,29 @@ describe('livestream join access routes', () => {
             }),
         });
 
+        attendanceFindOne.mockImplementation((query: any) => {
+            const removed = query.userId === 'student-removed';
+            return {
+                select: jest.fn().mockReturnValue({
+                    lean: jest.fn().mockResolvedValue(removed ? { _id: 'removed-1' } : null),
+                }),
+            };
+        });
+
         attendanceCreate.mockResolvedValue(undefined);
         mintViewerToken.mockResolvedValue({ token: 'viewer-token', roomName: 'room-public-1', url: 'wss://livekit.test' });
         acquireJoinLock.mockResolvedValue({ allowed: true, rejoin: false });
         releaseJoinLock.mockResolvedValue(true);
     });
 
-    it('rejects join attempts before teacher starts and after stream ended', async () => {
+    it('rejects join attempts before teacher starts, while paused, and after stream ended', async () => {
         const beforeStart = await request(app)
             .post('/api/livestreams/scheduled-public-1/join')
+            .set('Authorization', 'Bearer student-token')
+            .send({ deviceId: 'device-a' });
+
+        const paused = await request(app)
+            .post('/api/livestreams/paused-public-1/join')
             .set('Authorization', 'Bearer student-token')
             .send({ deviceId: 'device-a' });
 
@@ -172,6 +201,7 @@ describe('livestream join access routes', () => {
             .send({ deviceId: 'device-a' });
 
         expect(beforeStart.status).toBe(409);
+        expect(paused.status).toBe(409);
         expect(afterEnd.status).toBe(409);
         expect(mintViewerToken).not.toHaveBeenCalled();
     });
@@ -198,7 +228,7 @@ describe('livestream join access routes', () => {
         expect(allowed.body.provider.token).toBe('viewer-token');
     });
 
-    it('enforces single-device policy and allows rejoin from same device', async () => {
+    it('enforces single-device policy, supports same-device rejoin, and blocks removed users', async () => {
         acquireJoinLock
             .mockResolvedValueOnce({ allowed: true, rejoin: false })
             .mockResolvedValueOnce({ allowed: false, rejoin: false })
@@ -219,9 +249,17 @@ describe('livestream join access routes', () => {
             .set('Authorization', 'Bearer student-token')
             .send({ deviceId: 'device-a' });
 
+        const removed = await request(app)
+            .post('/api/livestreams/live-public-1/join')
+            .set('Authorization', 'Bearer removed-student-token')
+            .send({ deviceId: 'device-r' });
+
         expect(first.status).toBe(200);
         expect(second.status).toBe(409);
         expect(rejoin.status).toBe(200);
         expect(rejoin.body.data.rejoin).toBe(true);
+
+        expect(removed.status).toBe(403);
+        expect(removed.body.error).toContain('removed');
     });
 });

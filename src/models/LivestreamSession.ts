@@ -1,7 +1,7 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 export type LivestreamAccessMode = 'public' | 'private';
-export type LivestreamStatus = 'scheduled' | 'live' | 'ended' | 'cancelled';
+export type LivestreamStatus = 'scheduled' | 'live' | 'paused' | 'ended' | 'cancelled';
 
 export interface ILivestreamSession extends Document {
     title: string;
@@ -13,6 +13,8 @@ export interface ILivestreamSession extends Document {
     livekitRoomName: string;
     scheduledFor?: Date;
     startedAt?: Date;
+    pausedAt?: Date;
+    resumedAt?: Date;
     endedAt?: Date;
     cancelledAt?: Date;
     createdAt: Date;
@@ -33,7 +35,7 @@ const LivestreamSessionSchema = new Schema<ILivestreamSession>(
         },
         status: {
             type: String,
-            enum: ['scheduled', 'live', 'ended', 'cancelled'],
+            enum: ['scheduled', 'live', 'paused', 'ended', 'cancelled'],
             default: 'scheduled',
             required: true,
             index: true,
@@ -41,6 +43,8 @@ const LivestreamSessionSchema = new Schema<ILivestreamSession>(
         livekitRoomName: { type: String, required: true, trim: true, index: true },
         scheduledFor: { type: Date },
         startedAt: { type: Date },
+        pausedAt: { type: Date },
+        resumedAt: { type: Date },
         endedAt: { type: Date },
         cancelledAt: { type: Date },
     },

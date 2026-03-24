@@ -73,8 +73,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-realtime-session-experience-01-PLAN.md - Teacher realtime control endpoints + paused-state and removal audit contracts
-- [ ] 07-realtime-session-experience-02-PLAN.md - Presence reconnect policy + session metadata event-feed contracts
+- [x] 07-realtime-session-experience-01-PLAN.md - Teacher realtime control endpoints + paused-state and removal audit contracts
+- [x] 07-realtime-session-experience-02-PLAN.md - Presence reconnect policy + session metadata event-feed contracts
 
 ### Phase 8: Livestream Reliability & Compliance
 **Goal:** Verify livestream correctness, document operations, and enforce CI quality gates.

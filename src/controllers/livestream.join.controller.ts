@@ -12,6 +12,10 @@ const rejectClosedState = (status: string): string | null => {
         return 'Livestream has not started yet.';
     }
 
+    if (status === 'paused') {
+        return 'Livestream is paused.';
+    }
+
     if (status === 'ended' || status === 'cancelled') {
         return 'Livestream already closed.';
     }
@@ -40,6 +44,19 @@ const hasPrivateAccess = async (userId: string, courseId: string): Promise<boole
         .lean();
 
     return Boolean(paidOrder);
+};
+
+const wasRemovedByTeacher = async (livestreamId: string, userId: string): Promise<boolean> => {
+    const row = await LivestreamAttendance.findOne({
+        livestreamId,
+        userId,
+        eventType: 'removed',
+        reason: 'removed-by-teacher',
+    })
+        .select('_id')
+        .lean();
+
+    return Boolean(row);
 };
 
 const rejectWithAudit = async (
@@ -74,6 +91,11 @@ const handleJoinLike = async (req: AuthenticatedRequest, res: Response, forceRej
 
     if (req.auth!.role !== 'student') {
         return res.status(403).json({ error: 'Forbidden.' });
+    }
+
+    const removed = await wasRemovedByTeacher(String(livestream._id), req.auth!.userId);
+    if (removed) {
+        return rejectWithAudit(req, res, String(livestream._id), deviceId, 403, 'You were removed from this livestream.');
     }
 
     const closedReason = rejectClosedState(livestream.status);
