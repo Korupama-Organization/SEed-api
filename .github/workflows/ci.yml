@@ -26,5 +26,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Run livestream regression gate
+        run: npm run test:livestream
+
       - name: Run coverage tests
         run: npm run test:coverage

@@ -67,13 +67,17 @@ const rejectWithAudit = async (
     statusCode: number,
     reason: string,
 ) => {
-    await LivestreamAttendance.create({
-        livestreamId,
-        userId: req.auth!.userId,
-        deviceId,
-        eventType: 'reject',
-        reason,
-    });
+    try {
+        await LivestreamAttendance.create({
+            livestreamId,
+            userId: req.auth!.userId,
+            deviceId,
+            eventType: 'reject',
+            reason,
+        });
+    } catch {
+        // Best effort audit logging; response contract must still be returned.
+    }
 
     return res.status(statusCode).json({ error: reason });
 };
@@ -114,12 +118,24 @@ const handleJoinLike = async (req: AuthenticatedRequest, res: Response, forceRej
         }
     }
 
-    const lockResult = await acquireJoinLock(String(livestream._id), req.auth!.userId, deviceId);
+    let lockResult: { allowed: boolean; rejoin: boolean };
+    try {
+        lockResult = await acquireJoinLock(String(livestream._id), req.auth!.userId, deviceId);
+    } catch {
+        return rejectWithAudit(req, res, String(livestream._id), deviceId, 503, 'Livestream join temporarily unavailable.');
+    }
+
     if (!lockResult.allowed) {
         return rejectWithAudit(req, res, String(livestream._id), deviceId, 409, 'Another active device is already connected.');
     }
 
-    const provider = await mintViewerToken(req.auth!.userId, livestream.livekitRoomName);
+    let provider: { token: string; roomName: string; url: string };
+    try {
+        provider = await mintViewerToken(req.auth!.userId, livestream.livekitRoomName);
+    } catch {
+        return rejectWithAudit(req, res, String(livestream._id), deviceId, 503, 'Livestream provider unavailable.');
+    }
+
     const eventType = forceRejoin || lockResult.rejoin ? 'rejoin' : 'join';
 
     await LivestreamAttendance.create({
@@ -143,16 +159,16 @@ const handleJoinLike = async (req: AuthenticatedRequest, res: Response, forceRej
 export const joinLivestream = async (req: AuthenticatedRequest, res: Response) => {
     try {
         return await handleJoinLike(req, res, false);
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
 export const rejoinLivestream = async (req: AuthenticatedRequest, res: Response) => {
     try {
         return await handleJoinLike(req, res, true);
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -178,7 +194,7 @@ export const leaveLivestream = async (req: AuthenticatedRequest, res: Response) 
         });
 
         return res.status(200).json({ data: { released: true } });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };

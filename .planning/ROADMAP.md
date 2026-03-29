@@ -82,6 +82,6 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-livestream-reliability-compliance-01-PLAN.md - Reliability regression matrix + dependency-failure hardening for livestream backend
-- [ ] 08-livestream-reliability-compliance-02-PLAN.md - Operations runbook + CI livestream quality gates
+- [x] 08-livestream-reliability-compliance-01-PLAN.md - Reliability regression matrix + dependency-failure hardening for livestream backend
+- [x] 08-livestream-reliability-compliance-02-PLAN.md - Operations runbook + CI livestream quality gates
 

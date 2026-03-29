@@ -20,6 +20,10 @@ const parseAccessMode = (value: unknown): LivestreamAccessMode | null => {
     return null;
 };
 
+const providerUnavailable = (res: Response) => {
+    return res.status(503).json({ error: 'Livestream provider unavailable.' });
+};
+
 export const createLivestream = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { title, description, accessMode: rawAccessMode, courseId, scheduledFor } = req.body;
@@ -51,8 +55,8 @@ export const createLivestream = async (req: AuthenticatedRequest, res: Response)
         });
 
         return res.status(201).json({ data: created });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -72,20 +76,28 @@ export const startLivestream = async (req: AuthenticatedRequest, res: Response) 
         }
 
         if (row.status === 'live') {
-            const alreadyLiveToken = await mintTeacherToken(req.auth!.userId, row.livekitRoomName);
-            return res.status(200).json({ data: row, provider: alreadyLiveToken });
+            try {
+                const alreadyLiveToken = await mintTeacherToken(req.auth!.userId, row.livekitRoomName);
+                return res.status(200).json({ data: row, provider: alreadyLiveToken });
+            } catch {
+                return providerUnavailable(res);
+            }
         }
 
-        await ensureRoom(row.livekitRoomName);
-        const teacherToken = await mintTeacherToken(req.auth!.userId, row.livekitRoomName);
+        try {
+            await ensureRoom(row.livekitRoomName);
+            const teacherToken = await mintTeacherToken(req.auth!.userId, row.livekitRoomName);
 
-        row.status = 'live';
-        row.startedAt = new Date();
-        await row.save();
+            row.status = 'live';
+            row.startedAt = new Date();
+            await row.save();
 
-        return res.status(200).json({ data: row, provider: teacherToken });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+            return res.status(200).json({ data: row, provider: teacherToken });
+        } catch {
+            return providerUnavailable(res);
+        }
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -104,15 +116,19 @@ export const endLivestream = async (req: AuthenticatedRequest, res: Response) =>
             return res.status(409).json({ error: 'Livestream already closed.' });
         }
 
-        await closeRoom(row.livekitRoomName);
+        try {
+            await closeRoom(row.livekitRoomName);
+        } catch {
+            return providerUnavailable(res);
+        }
 
         row.status = 'ended';
         row.endedAt = new Date();
         await row.save();
 
         return res.status(200).json({ data: row });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -132,7 +148,11 @@ export const cancelLivestream = async (req: AuthenticatedRequest, res: Response)
         }
 
         if (row.status === 'live') {
-            await closeRoom(row.livekitRoomName);
+            try {
+                await closeRoom(row.livekitRoomName);
+            } catch {
+                return providerUnavailable(res);
+            }
         }
 
         row.status = 'cancelled';
@@ -140,8 +160,8 @@ export const cancelLivestream = async (req: AuthenticatedRequest, res: Response)
         await row.save();
 
         return res.status(200).json({ data: row });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 

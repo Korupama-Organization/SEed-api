@@ -24,6 +24,10 @@ const loadOwnedLivestream = async (
     return { row };
 };
 
+const providerUnavailable = (res: Response) => {
+    return res.status(503).json({ error: 'Livestream provider unavailable.' });
+};
+
 export const pauseLivestream = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const owned = await loadOwnedLivestream(req);
@@ -50,8 +54,8 @@ export const pauseLivestream = async (req: AuthenticatedRequest, res: Response) 
         });
 
         return res.status(200).json({ data: row });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -81,8 +85,8 @@ export const resumeLivestream = async (req: AuthenticatedRequest, res: Response)
         });
 
         return res.status(200).json({ data: row });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -98,7 +102,12 @@ export const forceEndLivestream = async (req: AuthenticatedRequest, res: Respons
             return res.status(409).json({ error: 'Livestream already closed.' });
         }
 
-        await closeRoom(row.livekitRoomName);
+        try {
+            await closeRoom(row.livekitRoomName);
+        } catch {
+            return providerUnavailable(res);
+        }
+
         row.status = 'ended';
         row.endedAt = new Date();
         await row.save();
@@ -113,8 +122,8 @@ export const forceEndLivestream = async (req: AuthenticatedRequest, res: Respons
         });
 
         return res.status(200).json({ data: row });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };
 
@@ -145,7 +154,7 @@ export const removeParticipant = async (req: AuthenticatedRequest, res: Response
         });
 
         return res.status(200).json({ data: { removed: true, participantUserId } });
-    } catch (error: any) {
-        return res.status(500).json({ error: error.message || 'Server error.' });
+    } catch {
+        return res.status(500).json({ error: 'Server error.' });
     }
 };

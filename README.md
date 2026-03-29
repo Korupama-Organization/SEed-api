@@ -45,6 +45,11 @@ npm run test:coverage
 npm run test:smoke
 ```
 
+- Livestream reliability gate
+```bash
+npm run test:livestream
+```
+
 ## MVP Smoke Flow
 
 Automated smoke suite: `tests/smoke/mvp.smoke.integration.test.ts`
@@ -59,6 +64,10 @@ Coverage includes representative API flow contracts for:
 
 - Swagger UI: `/api-docs`
 - OpenAPI JSON: `/api-docs.json`
+
+## Livestream Operations Runbook
+
+- Backend operations/compliance guide: `docs/livestream-operations-runbook.md`
 
 ## Operational Troubleshooting
 

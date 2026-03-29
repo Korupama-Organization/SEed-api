@@ -9,7 +9,8 @@
                     "test":  "jest",
                     "test:security":  "jest --runInBand tests/security",
                     "test:coverage":  "jest --coverage --runInBand",
-                    "test:smoke":  "jest --runInBand tests/smoke"
+                    "test:smoke":  "jest --runInBand tests/smoke",
+                    "test:livestream":  "jest --runInBand tests/livestream/reliability/livestream.reliability.integration.test.ts tests/livestream/realtime/livestream.controls.integration.test.ts tests/livestream/realtime/livestream.presence.integration.test.ts tests/livestream/access/livestream.join.integration.test.ts tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts"
                 },
     "dependencies":  {
                          "bcrypt":  "^6.0.0",
