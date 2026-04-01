@@ -33,6 +33,7 @@ export type {
 	CreditTransactionType,
 	CreditTransactionDirection,
 	CreditTransactionStatus,
+	CreditTransactionProvider,
 } from './CreditTransaction';
 
 export { AILog } from './AILog';
