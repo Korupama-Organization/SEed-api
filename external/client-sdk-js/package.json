@@ -1,0 +1,55 @@
+{
+  "name": "livekit-client",
+  "version": "2.17.3",
+  "description": "JavaScript/TypeScript client SDK for LiveKit",
+  "main": "./dist/livekit-client.umd.js",
+  "module": "./dist/livekit-client.esm.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/livekit-client.esm.mjs",
+      "require": "./dist/livekit-client.umd.js"
+    },
+    "./e2ee-worker": {
+      "types": "./dist/src/e2ee/worker/e2ee.worker.d.ts",
+      "import": "./dist/livekit-client.e2ee.worker.mjs",
+      "require": "./dist/livekit-client.e2ee.worker.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "dev": "pnpm examples:demo",
+    "examples:demo": "vite examples/demo -c vite.config.mjs",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "@livekit/mutex": "1.1.1",
+    "@livekit/protocol": "1.44.0",
+    "events": "^3.3.0",
+    "jose": "^6.1.0",
+    "loglevel": "^1.9.2",
+    "sdp-transform": "^2.15.0",
+    "tslib": "2.8.1",
+    "typed-emitter": "^2.1.0",
+    "webrtc-adapter": "^9.0.1"
+  },
+  "peerDependencies": {
+    "@types/dom-mediacapture-record": "^1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.0",
+    "@babel/preset-env": "7.29.0",
+    "@rollup/plugin-babel": "6.1.0",
+    "@types/events": "^3.0.3",
+    "@types/sdp-transform": "2.15.0",
+    "happy-dom": "^20.0.0",
+    "typescript": "5.8.3",
+    "vite": "7.3.1",
+    "vitest": "^3.0.0"
+  },
+  "packageManager": "pnpm@10.22.0"
+}
