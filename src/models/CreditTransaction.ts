@@ -8,6 +8,7 @@ export type CreditTransactionType =
 
 export type CreditTransactionDirection = 'credit' | 'debit';
 export type CreditTransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
+export type CreditTransactionProvider = 'payos';
 
 export interface ICreditTransaction extends Document {
     userId: Types.ObjectId;
@@ -16,6 +17,10 @@ export interface ICreditTransaction extends Document {
     amount: number;
     status: CreditTransactionStatus;
     orderId?: Types.ObjectId;
+    provider?: CreditTransactionProvider;
+    providerOrderCode?: number;
+    providerPaymentLinkId?: string;
+    providerReference?: string;
     note?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -66,6 +71,13 @@ const CreditTransactionSchema = new Schema<ICreditTransaction, ICreditTransactio
             default: 'completed',
         },
         orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
+        provider: {
+            type: String,
+            enum: ['payos'],
+        },
+        providerOrderCode: { type: Number },
+        providerPaymentLinkId: { type: String, trim: true },
+        providerReference: { type: String, trim: true },
         note: { type: String, trim: true },
     },
     { timestamps: true }
@@ -73,6 +85,26 @@ const CreditTransactionSchema = new Schema<ICreditTransaction, ICreditTransactio
 
 CreditTransactionSchema.index({ userId: 1, status: 1, createdAt: -1 });
 CreditTransactionSchema.index({ orderId: 1 });
+CreditTransactionSchema.index(
+    { provider: 1, providerOrderCode: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            provider: { $exists: true },
+            providerOrderCode: { $type: 'number' },
+        },
+    }
+);
+CreditTransactionSchema.index(
+    { provider: 1, providerPaymentLinkId: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            provider: { $exists: true },
+            providerPaymentLinkId: { $type: 'string' },
+        },
+    }
+);
 
 CreditTransactionSchema.statics.getUserBalance = async function (
     userId: Types.ObjectId | string
