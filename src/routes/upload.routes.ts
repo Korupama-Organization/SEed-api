@@ -1,7 +1,17 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { getUploadUrl } from '../controllers/upload.controller';
+import { requireAuth } from '../middlewares/auth.middleware';
 
 const router = Router();
+
+const uploadRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests' },
+});
 
 /**
  * @swagger
@@ -9,6 +19,8 @@ const router = Router();
  *   post:
  *     summary: Generate a Filebase pre-signed upload URL for direct browser uploads
  *     tags: [Uploads]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -46,6 +58,6 @@ const router = Router();
  *       500:
  *         description: Server error while generating the signed URL
  */
-router.post('/get-upload-url', getUploadUrl);
+router.post('/get-upload-url', uploadRateLimiter, requireAuth, getUploadUrl);
 
 export default router;

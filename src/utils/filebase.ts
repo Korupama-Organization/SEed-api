@@ -27,8 +27,8 @@ export function getFilebaseConfig(): FilebaseConfig {
     };
 }
 
-export function createFilebaseClient(): S3Client {
-    const { accessKey, secretKey } = getFilebaseConfig();
+export function createFilebaseClient(config?: FilebaseConfig): S3Client {
+    const { accessKey, secretKey } = config ?? getFilebaseConfig();
 
     return new S3Client({
         // Filebase is S3-compatible, so we point the AWS SDK at Filebase's fixed endpoint and region.

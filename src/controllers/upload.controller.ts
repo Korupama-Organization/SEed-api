@@ -24,12 +24,12 @@ export async function getUploadUrl(req: Request, res: Response) {
             });
         }
 
-        const { bucketName } = getFilebaseConfig();
-        const s3Client = createFilebaseClient();
+        const config = getFilebaseConfig();
+        const s3Client = createFilebaseClient(config);
         const fileKey = buildCourseObjectKey(courseId, fileName);
 
         const command = new PutObjectCommand({
-            Bucket: bucketName,
+            Bucket: config.bucketName,
             Key: fileKey,
             // Filebase stores the uploaded content type so browsers can serve the file correctly later.
             ContentType: fileType,
@@ -41,7 +41,7 @@ export async function getUploadUrl(req: Request, res: Response) {
 
         return res.status(200).json({
             uploadUrl,
-            fileUrl: buildFilebasePublicUrl(bucketName, fileKey),
+            fileUrl: buildFilebasePublicUrl(config.bucketName, fileKey),
         });
     } catch (error) {
         console.error('Failed to generate Filebase upload URL:', error);
