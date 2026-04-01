@@ -38,6 +38,10 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 import authRoutes from './routes/auth.routes';
+import courseRoutes from './routes/course.routes';
+import uploadRoutes from './routes/upload.routes';
+
+// ── TODO: Register routes ─────────────────────────────────────────────────────
 import walletRoutes from './routes/wallet.routes';
 
 // ── TODO: Register routes ─────────────────────────────────────────────────────

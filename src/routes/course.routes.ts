@@ -1,34 +1,93 @@
 import { Router } from 'express';
 import {
-    createCourse,
-    deleteCourse,
-    getCourseById,
-    listCourses,
-    updateCourse,
+    getCourseMetadata,
+    saveCourseMetadata,
+    saveScormCourseDraft,
 } from '../controllers/course.controller';
-import { requireAuth, AuthenticatedRequest } from '../middlewares/auth.middleware';
-import { requireOwnership, requireRole } from '../middlewares/domain-authorization.middleware';
-import { Course } from '../models/Course';
+import { requireAuth } from '../middlewares/auth.middleware';
 
 const router = Router();
 
 /**
  * @swagger
- * /api/courses:
- *   get:
- *     summary: List courses
+ * /api/courses/metadata:
+ *   post:
+ *     summary: Save or update course metadata in MongoDB
  *     tags: [Courses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - courseId
+ *               - courseInfo
+ *               - metadata
+ *             properties:
+ *               courseId:
+ *                 type: string
+ *                 example: course_123
+ *               courseInfo:
+ *                 type: object
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                     example: Introduction to SCORM Authoring
+ *                   subtitle:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   category:
+ *                     type: string
+ *                   level:
+ *                     type: string
+ *                   language:
+ *                     type: string
+ *                   estimatedHours:
+ *                     type: string
+ *               settings:
+ *                 type: object
+ *                 properties:
+ *                   navigationMode:
+ *                     type: string
+ *                     enum: [linear, free]
+ *                   passScore:
+ *                     type: number
+ *                   allowRetakes:
+ *                     type: boolean
+ *                   trackTimeSpent:
+ *                     type: boolean
+ *               metadata:
+ *                 type: object
+ *                 properties:
+ *                   identifier:
+ *                     type: string
+ *                   version:
+ *                     type: string
+ *                   author:
+ *                     type: string
+ *                   keywords:
+ *                     type: string
+ *                   notes:
+ *                     type: string
  *     responses:
  *       200:
- *         description: List of courses
+ *         description: Course metadata updated successfully
+ *       201:
+ *         description: Course metadata saved successfully
+ *       400:
+ *         description: Missing or invalid metadata input
+ *       500:
+ *         description: Server error while saving metadata
  */
-router.get('/', listCourses);
+router.post('/metadata', requireAuth, saveCourseMetadata);
 
 /**
  * @swagger
- * /api/courses/{courseId}:
+ * /api/courses/metadata/{courseId}:
  *   get:
- *     summary: Get course by id
+ *     summary: Get saved course metadata by courseId
  *     tags: [Courses]
  *     parameters:
  *       - in: path
@@ -38,98 +97,34 @@ router.get('/', listCourses);
  *           type: string
  *     responses:
  *       200:
- *         description: Course detail
+ *         description: Course metadata fetched successfully
  *       404:
- *         description: Course not found
+ *         description: Course metadata not found
+ *       500:
+ *         description: Server error while fetching metadata
  */
-router.get('/:courseId', getCourseById);
+router.get('/metadata/:courseId', getCourseMetadata);
 
 /**
  * @swagger
- * /api/courses:
+ * /api/courses/scorm-drafts:
  *   post:
- *     summary: Create course (teacher only)
+ *     summary: Save a full SCORM course draft after direct file uploads complete
  *     tags: [Courses]
- *     security:
- *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
  *     responses:
  *       201:
- *         description: Course created
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
+ *         description: SCORM course saved successfully
+ *       400:
+ *         description: Missing or invalid draft input
+ *       500:
+ *         description: Server error while saving the SCORM course
  */
-router.post('/', requireAuth, requireRole('teacher'), createCourse);
-
-/**
- * @swagger
- * /api/courses/{courseId}:
- *   put:
- *     summary: Update course (teacher owner only)
- *     tags: [Courses]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: courseId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Course updated
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.put(
-    '/:courseId',
-    requireAuth,
-    requireRole('teacher'),
-    requireOwnership({
-        getOwnerId: async (req: AuthenticatedRequest) => {
-            const course = await Course.findById(req.params.courseId).select('instructor').lean();
-            return course ? String(course.instructor) : null;
-        },
-    }),
-    updateCourse,
-);
-
-/**
- * @swagger
- * /api/courses/{courseId}:
- *   delete:
- *     summary: Delete course (teacher owner only)
- *     tags: [Courses]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: courseId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Course deleted
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.delete(
-    '/:courseId',
-    requireAuth,
-    requireRole('teacher'),
-    requireOwnership({
-        getOwnerId: async (req: AuthenticatedRequest) => {
-            const course = await Course.findById(req.params.courseId).select('instructor').lean();
-            return course ? String(course.instructor) : null;
-        },
-    }),
-    deleteCourse,
-);
+router.post('/scorm-drafts', requireAuth, saveScormCourseDraft);
 
 export default router;

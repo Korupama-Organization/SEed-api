@@ -23,12 +23,14 @@ export interface ICourseStats {
 export interface ICourse extends Document {
     title: string;
     slug: string;
-    instructor: Types.ObjectId;
+    instructor?: Types.ObjectId;
     thumbnail?: string;
     description?: string;
     price: number;
     isPublished: boolean;
     tags: string[];
+    sourceType: 'manual' | 'scorm';
+    scormCourseId?: string;
     /** Nested curriculum: Course → Modules → Lessons */
     curriculum: IModule[];
     stats: ICourseStats;
@@ -68,13 +70,19 @@ const CourseSchema = new Schema<ICourse>(
     {
         title: { type: String, required: true, index: 'text' },
         slug: { type: String, unique: true, lowercase: true, trim: true },
-        instructor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        instructor: { type: Schema.Types.ObjectId, ref: 'User' },
         thumbnail: String,
         description: String,
-        price: { type: Number, required: true, min: 0 },
+        price: { type: Number, default: 100, min: 100 },
         isPublished: { type: Boolean, default: false },
         tags: [String],
-        curriculum: [ModuleSchema],
+        sourceType: {
+            type: String,
+            enum: ['manual', 'scorm'],
+            default: 'manual',
+        },
+        scormCourseId: { type: String, unique: true, sparse: true, trim: true },
+        curriculum: { type: [ModuleSchema], default: [] },
         stats: { type: CourseStatsSchema, default: () => ({}) },
     },
     { timestamps: true }
@@ -83,5 +91,6 @@ const CourseSchema = new Schema<ICourse>(
 CourseSchema.index({ instructor: 1 });
 CourseSchema.index({ isPublished: 1 });
 CourseSchema.index({ tags: 1 });
+CourseSchema.index({ scormCourseId: 1 }, { sparse: true });
 
 export const Course = model<ICourse>('Course', CourseSchema);
