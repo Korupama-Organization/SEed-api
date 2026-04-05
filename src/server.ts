@@ -37,9 +37,6 @@ app.get('/', (_req: Request, res: Response) => {
     res.json({ status: 'ok', message: 'STUDUY BACKEND API' });
 });
 
-import authRoutes from './routes/auth.routes';
-import courseRoutes from './routes/course.routes';
-import uploadRoutes from './routes/upload.routes';
 
 // ── TODO: Register routes ─────────────────────────────────────────────────────
 import walletRoutes from './routes/wallet.routes';
