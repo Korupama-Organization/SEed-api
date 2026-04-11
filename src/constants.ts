@@ -44,6 +44,7 @@ export const APP_CONFIG = {
     livekitApiSecret: process.env.LIVEKIT_API_SECRET || '',
     livekitTokenTtl: process.env.LIVEKIT_TOKEN_TTL || '15m',
     livestreamLockTtlSeconds: asNumber(process.env.LIVESTREAM_LOCK_TTL_SECONDS, 120),
+    payosWebhookUrl: process.env.PAYOS_WEBHOOK_URL || '',
 };
 
 export const REDIS_KEYS = {
