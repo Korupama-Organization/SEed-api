@@ -11,6 +11,7 @@ const REQUIRED_ENV_VARS = [
     'LIVEKIT_URL',
     'LIVEKIT_API_KEY',
     'LIVEKIT_API_SECRET',
+    'UIT_AUTH_SECRET'
 ] as const;
 
 export const validateRequiredEnv = (): void => {
