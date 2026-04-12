@@ -2,76 +2,84 @@ import { Schema, model, Document, Types } from 'mongoose';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
-export interface IBankAccount {
-    bankName?: string;
-    number?: string;
+export interface INormalAuth {
+    email: string;
+    passwordHash: string;
+    passwordUpdatedAt: Date;
 }
 
-export interface ITeacherProfile {
-    bio?: string;
-    expertise?: string[];
-    bankAccount?: IBankAccount;
-}
-
-export interface IUser extends Document {
-    fullName: string;
+export interface IContactInfo {
     email: string;
     phone: string;
-    password: string;
-    emailVerified: boolean;
-    passwordUpdatedAt?: Date;
-    role: 'student' | 'teacher' | 'admin';
-    avatar?: string;
-    /** Authentication provider: 'local' | 'google' | 'facebook' */
-    authProvider: string;
-    isBlocked: boolean;
-    teacherProfile?: ITeacherProfile;
+    githubUrl?: string;
+    linkedinUrl?: string;
+    facebookUrl?: string;
+}
+export interface IUser extends Document {
+    role: 'candidate' | 'recruiter' | 'admin';
+    authMethod: 'uit_auth' | 'normal_auth';
+    status: 'active' | 'inactive' | 'blocked';
+
+    fullName: string;
+    dateOfBirth?: Date;
+    gender?: 'Nam' | 'Nữ' | 'Khác';
+    avatarUrl?: string;
+
+
+    studentID?: string; // For candidates
+
+    normalAuth?: INormalAuth; // For others
+
+    contactInfo: IContactInfo;
     createdAt: Date;
     updatedAt: Date;
 }
 
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-const BankAccountSchema = new Schema<IBankAccount>(
+const ContactInfoSchema = new Schema<IContactInfo>(
     {
-        bankName: String,
-        number: String,
+        email: { type: String, required: true },
+        phone: { type: String, required: true },
+        githubUrl: String,
+        linkedinUrl: String,  
+        facebookUrl: String,
     },
     { _id: false }
 );
 
-const TeacherProfileSchema = new Schema<ITeacherProfile>(
+const NormalAuthSchema = new Schema<INormalAuth>(
     {
-        bio: String,
-        expertise: [String],
-        bankAccount: BankAccountSchema,
+        email: { type: String, required: true },    
+        passwordHash: { type: String, required: true },
+        passwordUpdatedAt: { type: Date, required: true },
     },
     { _id: false }
 );
 
 const UserSchema = new Schema<IUser>(
     {
+        role: { type: String, enum: ['candidate', 'recruiter', 'admin'], required: true },
+        authMethod: { type: String, enum: ['uit_auth', 'normal_auth'], required: true},
+        status: { type: String, enum: ['active', 'inactive', 'blocked'], default: 'active' },
         fullName: { type: String, required: true },
-        email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-        phone: { type: String, required: true, unique: true },
-        password: { type: String, required: true, select: false }, // Excluded from queries by default
-        emailVerified: { type: Boolean, default: false },
-        passwordUpdatedAt: { type: Date },
-        role: {
-            type: String,
-            enum: ['student', 'teacher', 'admin'],
-            default: 'student',
-        },
-        avatar: String,
-        authProvider: { type: String, default: 'local' },
-        isBlocked: { type: Boolean, default: false },
-        teacherProfile: TeacherProfileSchema,
+        dateOfBirth: Date,
+        gender: { type: String, enum: ['Nam', 'Nữ', 'Khác'] },
+        
+        avatarUrl: String,
+        studentID: { type: String, unique: true, sparse: true },
+        normalAuth: NormalAuthSchema,
+        contactInfo: { type: ContactInfoSchema, required: true },
     },
     { timestamps: true }
-);
+)
 
-// Note: email index is auto-created by unique: true in the schema
-UserSchema.index({ role: 1 });
+UserSchema.index({ 'normalAuth.email': 1 }, { unique: true, sparse: true });
+UserSchema.index({ role: 1 , status: 1 });
+
+
+// ─── Model ────────────────────────────────────────────────────────────────────
 
 
 export const User = model<IUser>('User', UserSchema);
