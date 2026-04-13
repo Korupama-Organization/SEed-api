@@ -34,13 +34,16 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
             return res.status(401).json({ error: 'Tài khoản không tồn tại.' });
         }
 
-        if (user.isBlocked) {
+        if (user.status === 'blocked') {
             return res.status(403).json({ error: 'Tài khoản đã bị khóa.' });
         }
 
-        // Vô hiệu hóa token cũ nếu mật khẩu đã thay đổi sau khi token được cấp
+        if (user.status !== 'active') {
+            return res.status(403).json({ error: 'Tài khoản chưa hoạt động.' });
+        }
+
         const issuedAtMs = getTokenIssuedAt(payload) * 1000;
-        const passwordUpdatedAtMs = user.passwordUpdatedAt?.getTime() ?? 0;
+        const passwordUpdatedAtMs = user.normalAuth?.passwordUpdatedAt?.getTime() ?? 0;
         if (issuedAtMs < passwordUpdatedAtMs) {
             return res.status(401).json({ error: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' });
         }

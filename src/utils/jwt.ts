@@ -1,11 +1,13 @@
-import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
+import { JwtPayload, SignOptions } from 'jsonwebtoken';
 import { APP_CONFIG } from '../constants';
 
 type TokenType = 'access' | 'refresh' | 'reset_password';
+type AuthRole = 'candidate' | 'recruiter' | 'admin';
 
 interface TokenPayload {
     sub: string;
-    role?: 'student' | 'teacher' | 'admin';
+    role?: AuthRole;
     type: TokenType;
 }
 
@@ -17,11 +19,11 @@ const signToken = (payload: TokenPayload, secret: string, expiresIn: SignOptions
     return jwt.sign(payload, secret, options);
 };
 
-export const generateAccessToken = (userId: string, role: 'student' | 'teacher' | 'admin'): string => {
+export const generateAccessToken = (userId: string, role: AuthRole): string => {
     return signToken(
         { sub: userId, role, type: 'access' },
         APP_CONFIG.jwtSecret,
-        APP_CONFIG.accessTokenExpiresIn as SignOptions['expiresIn']
+        APP_CONFIG.accessTokenExpiresIn as SignOptions['expiresIn'],
     );
 };
 
@@ -29,7 +31,7 @@ export const generateRefreshToken = (userId: string): string => {
     return signToken(
         { sub: userId, type: 'refresh' },
         APP_CONFIG.refreshTokenSecret,
-        APP_CONFIG.refreshTokenExpiresIn as SignOptions['expiresIn']
+        APP_CONFIG.refreshTokenExpiresIn as SignOptions['expiresIn'],
     );
 };
 
@@ -37,7 +39,7 @@ export const generateResetPasswordToken = (userId: string): string => {
     return signToken(
         { sub: userId, type: 'reset_password' },
         APP_CONFIG.resetPasswordSecret,
-        APP_CONFIG.resetPasswordExpiresIn as SignOptions['expiresIn']
+        APP_CONFIG.resetPasswordExpiresIn as SignOptions['expiresIn'],
     );
 };
 

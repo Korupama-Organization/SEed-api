@@ -69,10 +69,34 @@ const options: swaggerJSDoc.Options = {
                 },
                 LoginRequest: {
                     type: 'object',
-                    required: ['email', 'password'],
+                    required: ['password'],
                     properties: {
-                        email: { type: 'string', format: 'email', example: 'nguyenvana@example.com' },
-                        password: { type: 'string', example: 'secret123' },
+                        userID: {
+                            type: 'string',
+                            example: '23520408',
+                            description: 'UIT student ID for candidate login',
+                        },
+                        email: {
+                            type: 'string',
+                            format: 'email',
+                            example: 'hr@company.com',
+                            description: 'Email for normal_auth login',
+                        },
+                        password: {
+                            type: 'string',
+                            example: 'secret123',
+                            description: 'Encrypted UIT password for uit_auth, plain password for normal_auth',
+                        },
+                        authMethod: {
+                            type: 'string',
+                            enum: ['uit_auth', 'normal_auth'],
+                            example: 'uit_auth',
+                        },
+                        type: {
+                            type: 'string',
+                            enum: ['candidate', 'hr', 'recruiter', 'admin'],
+                            example: 'candidate',
+                        },
                     },
                 },
                 RefreshTokenRequest: {

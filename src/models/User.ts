@@ -10,7 +10,7 @@ export interface INormalAuth {
 
 export interface IContactInfo {
     email: string;
-    phone: string;
+    phone?: string | null;
     githubUrl?: string;
     linkedinUrl?: string;
     facebookUrl?: string;
@@ -41,7 +41,7 @@ export interface IUser extends Document {
 const ContactInfoSchema = new Schema<IContactInfo>(
     {
         email: { type: String, required: true },
-        phone: { type: String, required: true },
+        phone: { type: String, default: null },
         githubUrl: String,
         linkedinUrl: String,  
         facebookUrl: String,
