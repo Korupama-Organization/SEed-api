@@ -266,10 +266,6 @@ export const loginUser = async (req: Request, res: Response) => {
 
 export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        if (!req.auth?.userId) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-
         const user = await User.findById(req.auth.userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
