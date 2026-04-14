@@ -369,3 +369,24 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
+
+export const temporaryPasswordEncryption = async (req: Request, res: Response) => {
+    try {
+        const { password } = req.body as { password?: string };
+        if (!password) {
+            return res.status(400).json({ message: 'Missing password field' });
+        }
+        
+        const secret = process.env.UIT_AUTH_SECRET;
+        if (!secret) {
+            return res.status(500).json({ message: 'UIT_AUTH_SECRET is not configured' });
+        }
+
+        const encryptedPassword = await encryptPassword(password, secret);
+        return res.json({ encryptedPassword });
+    } catch (error) {
+        console.error('Password encryption error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
