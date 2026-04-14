@@ -1,11 +1,12 @@
-import 'dotenv/config';
-import cors from 'cors';
-import express, { Request, Response } from 'express';
-import connectDB from './db/connect';
-import authRoutes from './routes/auth.routes';
-import { validateRequiredEnv } from './utils/env-validation';
-import swaggerSpec from './utils/swagger';
-import swaggerUi from 'swagger-ui-express';
+import "dotenv/config";
+import cors from "cors";
+import express, { Request, Response } from "express";
+import connectDB from "./db/connect";
+import authRoutes from "./routes/auth.routes";
+import candidateProfileRoutes from "./routes/candidate-profile.routes";
+import { validateRequiredEnv } from "./utils/env-validation";
+import swaggerSpec from "./utils/swagger";
+import swaggerUi from "swagger-ui-express";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,23 +15,22 @@ app.use(cors());
 app.use(express.json());
 
 app.use(
-    '/api-docs',
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, {
-        customSiteTitle: 'Studuy API Docs',
-        swaggerOptions: { persistAuthorization: true },
-    }),
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "Studuy API Docs",
+    swaggerOptions: { persistAuthorization: true },
+  }),
 );
 
-app.get('/api-docs.json', (_req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpec);
+app.get("/api-docs.json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
 });
 
-app.get('/', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', message: 'STUDUY BACKEND API' });
+app.get("/", (_req: Request, res: Response) => {
+  res.json({ status: "ok", message: "STUDUY BACKEND API" });
 });
-
 
 // ── TODO: Register routes ─────────────────────────────────────────────────────
 
@@ -38,14 +38,15 @@ app.get('/', (_req: Request, res: Response) => {
 // app.use('/api/courses', courseRoutes);
 // app.use('/api/lessons', lessonRoutes);
 // app.use('/api/orders',  orderRoutes);
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/candidate-profiles", candidateProfileRoutes);
 
 const start = async () => {
-    validateRequiredEnv();
-    await connectDB();
-    app.listen(PORT, () => {
-        console.log(`Server is up and running at http://localhost:${PORT}`);
-    });
+  validateRequiredEnv();
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`Server is up and running at http://localhost:${PORT}`);
+  });
 };
 
 start();
