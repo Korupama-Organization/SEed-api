@@ -185,25 +185,45 @@ router.get('/me', requireAuth, getCurrentUser);
  *         description: Missing refresh token
  *         content:
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
+ *               type: object
+ *               required:
+ *                 - message
+ *               properties:
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Missing access token or invalid refresh token
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
+ *               type: object
+ *               required:
+ *                 - message
+ *               properties:
+ *                 message:
+ *                   type: string
  *       403:
  *         description: Refresh token does not belong to the authenticated user
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
+ *               type: object
+ *               required:
+ *                 - message
+ *               properties:
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Server error
  *         content:
  *           application/json:
  *             schema:
+ *               type: object
+ *               required:
+ *                 - message
+ *               properties:
+ *                 message:
+ *                   type: string
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/logout', requireAuth, logoutUser);
