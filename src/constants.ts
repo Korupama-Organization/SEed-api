@@ -52,5 +52,6 @@ export const REDIS_KEYS = {
     verifyEmailCooldown: (email: string) => `auth:verify-email:cooldown:${email.toLowerCase()}`,
     forgotPasswordOtp: (email: string) => `auth:forgot-password:otp:${email.toLowerCase()}`,
     forgotPasswordCooldown: (email: string) => `auth:forgot-password:cooldown:${email.toLowerCase()}`,
+    refreshToken: (tokenHash: string) => `auth:refresh-token:${tokenHash}`,
     livestreamActiveSession: (sessionId: string, userId: string) => `livestream:active:${sessionId}:${userId}`,
 };
