@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import {
     AuthenticationError,
     authenticateWithEncryptedPassword,
+    encryptPassword,
 } from 'uit-authenticator';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { REDIS_KEYS } from '../constants';
@@ -266,7 +267,12 @@ export const loginUser = async (req: Request, res: Response) => {
 
 export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const user = await User.findById(req.auth.userId);
+        const auth = req.auth;
+        if (!auth?.userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const user = await User.findById(auth.userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -332,6 +338,11 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
 export const logoutUser = async (req: AuthenticatedRequest, res: Response) => {
     try {
+        const auth = req.auth;
+        if (!auth?.userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) {
             return res.status(400).json({ message: 'Missing refresh token' });
@@ -348,7 +359,7 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response) => {
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
 
-        if (String(payload.sub) !== req.auth.userId) {
+        if (String(payload.sub) !== auth.userId) {
             return res.status(403).json({ message: 'Refresh token does not belong to the authenticated user' });
         }
 
