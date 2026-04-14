@@ -101,9 +101,17 @@ const options: swaggerJSDoc.Options = {
                 },
                 RefreshTokenRequest: {
                     type: 'object',
-                    required: ['refresh_token'],
                     properties: {
-                        refresh_token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+                        refresh_token: {
+                            type: 'string',
+                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                            description: 'Refresh token using the snake_case field name',
+                        },
+                        refreshToken: {
+                            type: 'string',
+                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                            description: 'Refresh token using the camelCase field name',
+                        },
                     },
                 },
                 ForgotPasswordRequest: {
