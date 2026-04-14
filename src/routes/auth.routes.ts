@@ -4,6 +4,7 @@ import {
     loginUser,
     logoutUser,
     refreshAccessToken,
+    temporaryPasswordEncryption,
 } from '../controllers/auth.controller';
 import { authRateLimiter } from '../middlewares/auth-rate-limit.middleware';
 import { requireAuth } from '../middlewares/auth.middleware';
@@ -181,5 +182,50 @@ router.get('/me', requireAuth, getCurrentUser);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/logout', requireAuth, logoutUser);
+
+/**
+ * @swagger
+ * /api/auth/encrypt-password:
+ *   post:
+ *     summary: Encrypt a UIT password for client-side login testing
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 example: myPlainPassword123
+ *                 description: Plain UIT password to encrypt before calling the UIT login flow
+ *     responses:
+ *       200:
+ *         description: Password encrypted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 encryptedPassword:
+ *                   type: string
+ *                   example: U2FsdGVkX1+exampleEncryptedValue
+ *       400:
+ *         description: Missing password field
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Server error or missing UIT auth secret
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/encrypt-password', temporaryPasswordEncryption);
 
 export default router;
