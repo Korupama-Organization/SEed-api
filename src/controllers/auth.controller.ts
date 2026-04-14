@@ -332,10 +332,6 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
 export const logoutUser = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        if (!req.auth?.userId) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) {
             return res.status(400).json({ message: 'Missing refresh token' });
