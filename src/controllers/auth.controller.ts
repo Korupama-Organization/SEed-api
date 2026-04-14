@@ -1,10 +1,21 @@
+import { createHash } from 'crypto';
 import { Request, Response } from 'express';
+import { JwtPayload } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import {
     AuthenticationError,
     authenticateWithEncryptedPassword,
+    encryptPassword,
 } from 'uit-authenticator';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { REDIS_KEYS } from '../constants';
+import { deleteTempValue, getTempValue, setTempValue } from '../utils/redis';
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    getTokenIssuedAt,
+    verifyRefreshToken,
+} from '../utils/jwt';
 import { IUser, User } from '../models/User';
 
 type LoginMode = 'uit_auth' | 'normal_auth';
@@ -58,12 +69,63 @@ const assertActiveUser = (user: IUser): string | null => {
     return null;
 };
 
-const buildLoginResponse = (user: IUser) => ({
-    message: 'Login successful',
-    accessToken: generateAccessToken(String(user._id), user.role),
-    refreshToken: generateRefreshToken(String(user._id)),
-    user: sanitizeUser(user),
-});
+const hashToken = (token: string): string => {
+    return createHash('sha256').update(token).digest('hex');
+};
+
+const getRefreshTokenKey = (token: string): string => {
+    return REDIS_KEYS.refreshToken(hashToken(token));
+};
+
+const getRefreshTokenTtlSeconds = (exp?: number): number => {
+    if (typeof exp !== 'number') {
+        return 0;
+    }
+
+    return Math.max(exp - Math.floor(Date.now() / 1000), 1);
+};
+
+const persistRefreshToken = async (token: string, userId: string, exp?: number): Promise<void> => {
+    const ttlSeconds = getRefreshTokenTtlSeconds(exp);
+    if (ttlSeconds <= 0) {
+        throw new Error('Refresh token expiration is invalid');
+    }
+
+    await setTempValue(getRefreshTokenKey(token), userId, ttlSeconds);
+};
+
+const issueAuthTokens = async (user: IUser) => {
+    const accessToken = generateAccessToken(String(user._id), user.role);
+    const refreshToken = generateRefreshToken(String(user._id));
+    const refreshPayload = verifyRefreshToken(refreshToken);
+
+    await persistRefreshToken(refreshToken, String(user._id), refreshPayload.exp);
+
+    return {
+        accessToken,
+        refreshToken,
+    };
+};
+
+const buildLoginResponse = async (user: IUser) => {
+    const tokens = await issueAuthTokens(user);
+
+    return {
+        message: 'Login successful',
+        ...tokens,
+        user: sanitizeUser(user),
+    };
+};
+
+const extractRefreshToken = (req: Request): string | null => {
+    const { refreshToken, refresh_token } = req.body as {
+        refreshToken?: string;
+        refresh_token?: string;
+    };
+
+    const token = refreshToken || refresh_token;
+    return typeof token === 'string' && token.trim() ? token.trim() : null;
+};
 
 const loginNormalAuthUser = async (identifier: string, password: string) => {
     const normalizedEmail = normalizeEmail(identifier);
@@ -173,7 +235,7 @@ export const loginUser = async (req: Request, res: Response) => {
                 return res.status(result.statusCode || 401).json({ message: result.error });
             }
 
-            return res.json(buildLoginResponse(result.user));
+            return res.json(await buildLoginResponse(result.user));
         }
 
         const result = await loginUitAuthUser(identifier, password);
@@ -182,7 +244,7 @@ export const loginUser = async (req: Request, res: Response) => {
         }
 
         return res.json({
-            ...buildLoginResponse(result.user),
+            ...(await buildLoginResponse(result.user)),
             uitProfile: {
                 username: result.uitProfile?.username,
                 fullName: result.uitProfile?.fullName,
@@ -199,6 +261,135 @@ export const loginUser = async (req: Request, res: Response) => {
         }
 
         console.error('Login error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        if (!req.auth?.userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const user = await User.findById(req.auth.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.json({
+            user: sanitizeUser(user),
+        });
+    } catch (error) {
+        console.error('Get current user error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+    try {
+        const refreshToken = extractRefreshToken(req);
+        if (!refreshToken) {
+            return res.status(400).json({ message: 'Missing refresh token' });
+        }
+
+        let payload: JwtPayload;
+        try {
+            payload = verifyRefreshToken(refreshToken);
+        } catch {
+            return res.status(401).json({ message: 'Invalid or expired refresh token' });
+        }
+
+        if (payload.type !== 'refresh' || !payload.sub) {
+            return res.status(401).json({ message: 'Invalid refresh token' });
+        }
+
+        const storedUserId = await getTempValue(getRefreshTokenKey(refreshToken));
+        if (storedUserId !== String(payload.sub)) {
+            return res.status(401).json({ message: 'Refresh token has been revoked' });
+        }
+
+        const user = await User.findById(payload.sub);
+        if (!user) {
+            await deleteTempValue(getRefreshTokenKey(refreshToken));
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const statusError = assertActiveUser(user);
+        if (statusError) {
+            return res.status(403).json({ message: statusError });
+        }
+
+        const issuedAtMs = getTokenIssuedAt(payload) * 1000;
+        const passwordUpdatedAtMs = user.normalAuth?.passwordUpdatedAt?.getTime() ?? 0;
+        if (issuedAtMs < passwordUpdatedAtMs) {
+            await deleteTempValue(getRefreshTokenKey(refreshToken));
+            return res.status(401).json({ message: 'Session has expired. Please log in again.' });
+        }
+
+        await deleteTempValue(getRefreshTokenKey(refreshToken));
+
+        const tokens = await issueAuthTokens(user);
+        return res.json({
+            message: 'Token refreshed successfully',
+            ...tokens,
+        });
+    } catch (error) {
+        console.error('Refresh token error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const logoutUser = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        if (!req.auth?.userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const refreshToken = extractRefreshToken(req);
+        if (!refreshToken) {
+            return res.status(400).json({ message: 'Missing refresh token' });
+        }
+
+        let payload: JwtPayload;
+        try {
+            payload = verifyRefreshToken(refreshToken);
+        } catch {
+            return res.status(401).json({ message: 'Invalid or expired refresh token' });
+        }
+
+        if (payload.type !== 'refresh' || !payload.sub) {
+            return res.status(401).json({ message: 'Invalid refresh token' });
+        }
+
+        if (String(payload.sub) !== req.auth.userId) {
+            return res.status(403).json({ message: 'Refresh token does not belong to the authenticated user' });
+        }
+
+        await deleteTempValue(getRefreshTokenKey(refreshToken));
+
+        return res.json({ message: 'Logout successful' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const temporaryPasswordEncryption = async (req: Request, res: Response) => {
+    try {
+        const { password } = req.body as { password?: string };
+        if (!password) {
+            return res.status(400).json({ message: 'Missing password field' });
+        }
+        
+        const secret = process.env.UIT_AUTH_SECRET;
+        if (!secret) {
+            return res.status(500).json({ message: 'UIT_AUTH_SECRET is not configured' });
+        }
+
+        const encryptedPassword = await encryptPassword(password, secret);
+        return res.json({ encryptedPassword });
+    } catch (error) {
+        console.error('Password encryption error:', error);
         return res.status(500).json({ message: 'Server error' });
     }
 };
