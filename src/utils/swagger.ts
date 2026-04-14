@@ -181,82 +181,21 @@ const options: swaggerJSDoc.Options = {
           description:
             "Partial update for candidate profile. Send only fields you want to update.",
           properties: {
-            basicInfo: {
+            academicInfo: {
               type: "object",
               properties: {
-                mssv: { type: "string", example: "2152xxxx" },
-                fullName: { type: "string", example: "Nguyen Van A" },
-                birthday: {
+                university: {
                   type: "string",
-                  format: "date-time",
-                  example: "2003-01-01T00:00:00.000Z",
+                  example: "University of Information Technology",
                 },
-                gender: {
-                  type: "string",
-                  enum: ["Nam", "Nữ", "Khác"],
-                  example: "Nam",
-                },
-                phone: { type: "string", example: "090xxxxxxx" },
-                email: { type: "string", example: "student@gm.uit.edu.vn" },
-                github: {
-                  type: "string",
-                  example: "https://github.com/nguyenvana",
-                },
-                facebook: {
-                  type: "string",
-                  example: "https://facebook.com/nguyenvana",
-                },
-                linkedin: {
-                  type: "string",
-                  example: "https://linkedin.com/in/nguyenvana",
-                },
+                major: { type: "string", example: "Computer Science" },
+                graduationYear: { type: "number", example: 2027 },
+                gpa: { type: "number", example: 3.4 },
               },
             },
-            education: {
-              type: "object",
-              properties: {
-                school: {
-                  type: "string",
-                  example: "Đại học Công nghệ Thông tin - ĐHQG TP.HCM",
-                },
-                major: { type: "string", example: "Kỹ thuật Phần mềm" },
-                expectedGraduation: { type: "string", example: "06/2025" },
-                gpa: { type: "number", example: 3.6 },
-              },
-            },
-            strengths: {
+            advantagePoint: {
               type: "string",
-              example:
-                "Tư duy logic tốt, có khả năng tự học công nghệ mới nhanh chóng.",
-            },
-            skills: {
-              type: "object",
-              properties: {
-                technical: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      category: {
-                        type: "string",
-                        example: "Programming Languages",
-                      },
-                      name: { type: "string", example: "TypeScript" },
-                      yoe: { type: "number", example: 1 },
-                      confidence: { type: "number", example: 1 },
-                    },
-                  },
-                },
-                softSkills: {
-                  type: "array",
-                  items: { type: "string" },
-                  example: [
-                    "Thuyết trình",
-                    "Làm việc nhóm",
-                    "Giải quyết vấn đề",
-                  ],
-                },
-              },
+              example: "Fast learner and strong ownership mindset",
             },
             languages: {
               type: "array",
@@ -292,53 +231,152 @@ const options: swaggerJSDoc.Options = {
                 },
               },
             },
+            technicalSkills: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  category: {
+                    type: "string",
+                    enum: [
+                      "Ngôn ngữ lập trình",
+                      "Framework",
+                      "OS",
+                      "Database",
+                      "Cloud",
+                      "Version Control",
+                      "Công cụ quản lý dự án",
+                      "Khác",
+                    ],
+                    example: "Framework",
+                  },
+                  name: { type: "string", example: "Express.js" },
+                  yearsOfExperience: { type: "number", example: 2 },
+                  confidence: { type: "boolean", example: true },
+                },
+              },
+            },
+            softSkills: {
+              type: "array",
+              items: { type: "string" },
+              example: ["Communication", "Teamwork", "Problem solving"],
+            },
+            projects: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string", example: "E-learning Platform" },
+                  description: {
+                    type: "string",
+                    example: "Build LMS backend with Node.js and MongoDB",
+                  },
+                  technologies: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["Node.js", "TypeScript", "MongoDB"],
+                  },
+                  role: { type: "string", example: "Backend Developer" },
+                  contribution: {
+                    type: "string",
+                    example: "Designed API and database schema",
+                  },
+                  startDate: {
+                    type: "string",
+                    format: "date-time",
+                    example: "2025-01-01T00:00:00.000Z",
+                  },
+                  endDate: {
+                    type: "string",
+                    format: "date-time",
+                    example: "2025-06-01T00:00:00.000Z",
+                  },
+                  teamSize: { type: "number", example: 4 },
+                  repositoryUrl: {
+                    type: "string",
+                    example: "https://github.com/example/lms",
+                  },
+                  reportUrl: {
+                    type: "string",
+                    example: "https://docs.google.com/document/d/example",
+                  },
+                },
+              },
+            },
+            workExperiences: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  companyName: { type: "string", example: "SEeds Tech" },
+                  position: {
+                    type: "string",
+                    example: "Intern Backend Developer",
+                  },
+                  startDate: {
+                    type: "string",
+                    format: "date-time",
+                    example: "2025-07-01T00:00:00.000Z",
+                  },
+                  endDate: {
+                    type: "string",
+                    format: "date-time",
+                    example: "2025-09-01T00:00:00.000Z",
+                  },
+                  description: {
+                    type: "string",
+                    example: "Implemented REST APIs and unit tests",
+                  },
+                  technologiesUsed: {
+                    type: "array",
+                    items: { type: "string" },
+                    example: ["Express", "MongoDB", "Jest"],
+                  },
+                },
+              },
+            },
+            introductionQuestions: {
+              type: "object",
+              properties: {
+                preferredRoles: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      preferredRole: {
+                        type: "string",
+                        enum: [
+                          "Frontend",
+                          "Backend",
+                          "Fullstack",
+                          "Mobile",
+                          "DevOps",
+                          "QA",
+                          "Khác",
+                        ],
+                        example: "Backend",
+                      },
+                    },
+                  },
+                },
+                whyTheseRoles: {
+                  type: "string",
+                  example: "I enjoy solving system design and API problems.",
+                },
+                futureGoals: {
+                  type: "string",
+                  example: "Become a senior backend engineer in 3 years.",
+                },
+                favoriteTechnology: { type: "string", example: "TypeScript" },
+              },
+            },
           },
           example: {
-            basicInfo: {
-              mssv: "2152xxxx",
-              fullName: "Nguyen Huu Lam Giang",
-              birthday: "2003-01-01T00:00:00.000Z",
-              gender: "Nam",
-              phone: "090xxxxxxx",
-              email: "student@gm.uit.edu.vn",
-              github: "https://github.com/nguyenvana",
-              facebook: "https://facebook.com/nguyenvana",
-              linkedin: "https://linkedin.com/in/nguyenvana",
-            },
-            education: {
-              school: "Đại học Công nghệ Thông tin - ĐHQG TP.HCM",
-              major: "Kỹ thuật Phần mềm",
-              expectedGraduation: "06/2025",
-              gpa: 3.6,
-            },
-            strengths:
-              "Tư duy logic tốt, có khả năng tự học công nghệ mới nhanh chóng.",
-            skills: {
-              technical: [
-                {
-                  category: "Programming Languages",
-                  name: "TypeScript",
-                  yoe: 1,
-                  confidence: 1,
-                },
-                {
-                  category: "Frameworks",
-                  name: "NestJS",
-                  yoe: 0.5,
-                  confidence: 1,
-                },
-                {
-                  category: "Databases",
-                  name: "MongoDB",
-                  yoe: 0.5,
-                  confidence: 1,
-                },
-              ],
-              softSkills: [
-                "Thuyết trình",
-                "Làm việc nhóm",
-                "Giải quyết vấn đề",
-              ],
+            academicInfo: {
+              university: "University of Information Technology",
+              major: "Computer Science",
+              graduationYear: 2027,
+              gpa: 3.4,
             },
             languages: [
               {
@@ -354,6 +392,55 @@ const options: swaggerJSDoc.Options = {
                 achievedAt: "2025-10-01T00:00:00.000Z",
               },
             ],
+            advantagePoint: "Fast learner and strong ownership mindset",
+            technicalSkills: [
+              {
+                category: "Framework",
+                name: "Express.js",
+                yearsOfExperience: 2,
+                confidence: true,
+              },
+              {
+                category: "Database",
+                name: "MongoDB",
+                yearsOfExperience: 2,
+                confidence: true,
+              },
+            ],
+            softSkills: ["Communication", "Teamwork", "Problem solving"],
+            projects: [
+              {
+                name: "E-learning Platform",
+                description: "Build LMS backend with Node.js and MongoDB",
+                technologies: ["Node.js", "TypeScript", "MongoDB"],
+                role: "Backend Developer",
+                contribution: "Designed API and database schema",
+                startDate: "2025-01-01T00:00:00.000Z",
+                endDate: "2025-06-01T00:00:00.000Z",
+                teamSize: 4,
+                repositoryUrl: "https://github.com/example/lms",
+                reportUrl: "https://docs.google.com/document/d/example",
+              },
+            ],
+            workExperiences: [
+              {
+                companyName: "SEeds Tech",
+                position: "Intern Backend Developer",
+                startDate: "2025-07-01T00:00:00.000Z",
+                endDate: "2025-09-01T00:00:00.000Z",
+                description: "Implemented REST APIs and unit tests",
+                technologiesUsed: ["Express", "MongoDB", "Jest"],
+              },
+            ],
+            introductionQuestions: {
+              preferredRoles: [
+                { preferredRole: "Backend" },
+                { preferredRole: "Fullstack" },
+              ],
+              whyTheseRoles: "I enjoy solving system design and API problems.",
+              futureGoals: "Become a senior backend engineer in 3 years.",
+              favoriteTechnology: "TypeScript",
+            },
           },
         },
         ErrorResponse: {

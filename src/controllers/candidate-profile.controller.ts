@@ -5,48 +5,22 @@ import { UpdateCandidateProfileDto } from "../dto/update-candidate-profile.dto";
 import { Types } from "mongoose";
 
 const PROFILE_UPDATABLE_FIELDS: (keyof UpdateCandidateProfileDto)[] = [
-  "basicInfo",
-  "education",
-  "strengths",
-  "skills",
+  "academicInfo",
   "languages",
   "achievements",
-];
-
-const isObject = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-};
-
-const flattenForSet = (
-  prefix: string,
-  value: Record<string, unknown>,
-): Record<string, unknown> => {
-  const flattened: Record<string, unknown> = {};
-
-  for (const [key, nestedValue] of Object.entries(value)) {
-    const nextPath = `${prefix}.${key}`;
-
-    if (isObject(nestedValue)) {
-      Object.assign(flattened, flattenForSet(nextPath, nestedValue));
-      continue;
-    }
-
-    flattened[nextPath] = nestedValue;
-  }
-
-  return flattened;
-};
-
-const ALLOWED_TOP_LEVEL_FIELDS = [...PROFILE_UPDATABLE_FIELDS] as const;
-const DEPRECATED_PROFILE_FIELDS = [
-  "academicInfo",
   "advantagePoint",
   "technicalSkills",
   "softSkills",
   "projects",
   "workExperiences",
   "introductionQuestions",
-] as const;
+];
+
+const isObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const ALLOWED_TOP_LEVEL_FIELDS = [...PROFILE_UPDATABLE_FIELDS] as const;
 
 export const updateMyCandidateProfile = async (req: Request, res: Response) => {
   const authReq = req as AuthenticatedRequest;
@@ -77,18 +51,11 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
   const rawProfilePayload: Partial<
     Record<keyof UpdateCandidateProfileDto, unknown>
   > = {};
-  const setPayload: Record<string, unknown> = {};
 
   for (const field of PROFILE_UPDATABLE_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(req.body, field)) {
       const fieldValue = req.body[field];
       rawProfilePayload[field] = fieldValue;
-
-      if (isObject(fieldValue)) {
-        Object.assign(setPayload, flattenForSet(field, fieldValue));
-      } else {
-        setPayload[field] = fieldValue;
-      }
     }
   }
   const profilePayload = rawProfilePayload as UpdateCandidateProfileDto;
@@ -101,13 +68,6 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
   }
 
   try {
-    const unsetDeprecatedFields = DEPRECATED_PROFILE_FIELDS.reduce<
-      Record<string, "">
-    >((acc, field) => {
-      acc[field] = "";
-      return acc;
-    }, {});
-
     const userObjectId = new Types.ObjectId(authReq.auth.userId);
     const existingProfile = await CandidateProfile.findOne({
       userId: userObjectId,
@@ -120,8 +80,7 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
       const updateResult = await CandidateProfile.updateOne(
         { userId: userObjectId },
         {
-          $set: setPayload,
-          $unset: unsetDeprecatedFields,
+          $set: profilePayload,
         },
         {
           runValidators: true,
@@ -140,13 +99,16 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
 
     if (!updatedProfile) {
       const canInitializeProfile =
-        Object.prototype.hasOwnProperty.call(profilePayload, "basicInfo") &&
-        Object.prototype.hasOwnProperty.call(profilePayload, "education");
+        Object.prototype.hasOwnProperty.call(profilePayload, "academicInfo") &&
+        Object.prototype.hasOwnProperty.call(
+          profilePayload,
+          "introductionQuestions",
+        );
 
       if (!canInitializeProfile) {
         return res.status(400).json({
           error:
-            "CandidateProfile chưa tồn tại. Cần gửi đầy đủ basicInfo và education để khởi tạo profile.",
+            "CandidateProfile chưa tồn tại. Cần gửi đầy đủ academicInfo và introductionQuestions để khởi tạo profile.",
         });
       }
 
@@ -165,11 +127,9 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
     }
 
     if (!updatedProfile?._id) {
-      return res
-        .status(500)
-        .json({
-          error: "Không thể đọc dữ liệu CandidateProfile sau khi cập nhật.",
-        });
+      return res.status(500).json({
+        error: "Không thể đọc dữ liệu CandidateProfile sau khi cập nhật.",
+      });
     }
 
     const persistedProfile = await CandidateProfile.collection.findOne({

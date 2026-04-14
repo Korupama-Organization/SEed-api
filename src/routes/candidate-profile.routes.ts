@@ -24,40 +24,11 @@ const router = Router();
  *             full:
  *               summary: Update almost full candidate profile
  *               value:
- *                 basicInfo:
- *                   mssv: 2152xxxx
- *                   fullName: Nguyen Huu Lam Giang
- *                   birthday: 2003-01-01T00:00:00.000Z
- *                   gender: Nam
- *                   phone: 090xxxxxxx
- *                   email: student@gm.uit.edu.vn
- *                   github: https://github.com/nguyenvana
- *                   facebook: https://facebook.com/nguyenvana
- *                   linkedin: https://linkedin.com/in/nguyenvana
- *                 education:
- *                   school: Đại học Công nghệ Thông tin - ĐHQG TP.HCM
- *                   major: Kỹ thuật Phần mềm
- *                   expectedGraduation: 06/2025
- *                   gpa: 3.6
- *                 strengths: Tư duy logic tốt, có khả năng tự học công nghệ mới nhanh chóng.
- *                 skills:
- *                   technical:
- *                     - category: Programming Languages
- *                       name: TypeScript
- *                       yoe: 1
- *                       confidence: 1
- *                     - category: Frameworks
- *                       name: NestJS
- *                       yoe: 0.5
- *                       confidence: 1
- *                     - category: Databases
- *                       name: MongoDB
- *                       yoe: 0.5
- *                       confidence: 1
- *                   softSkills:
- *                     - Thuyết trình
- *                     - Làm việc nhóm
- *                     - Giải quyết vấn đề
+ *                 academicInfo:
+ *                   university: University of Information Technology
+ *                   major: Computer Science
+ *                   graduationYear: 2027
+ *                   gpa: 3.4
  *                 languages:
  *                   - certificateName: IELTS
  *                     score: 7
@@ -66,6 +37,46 @@ const router = Router();
  *                 achievements:
  *                   - title: Top 10 Hackathon 2025
  *                     achievedAt: 2025-10-01T00:00:00.000Z
+ *                 advantagePoint: Fast learner and strong ownership mindset
+ *                 technicalSkills:
+ *                   - category: Framework
+ *                     name: Express.js
+ *                     yearsOfExperience: 2
+ *                     confidence: true
+ *                 softSkills:
+ *                   - Communication
+ *                   - Teamwork
+ *                   - Problem solving
+ *                 projects:
+ *                   - name: E-learning Platform
+ *                     description: Build LMS backend with Node.js and MongoDB
+ *                     technologies:
+ *                       - Node.js
+ *                       - TypeScript
+ *                       - MongoDB
+ *                     role: Backend Developer
+ *                     contribution: Designed API and database schema
+ *                     startDate: 2025-01-01T00:00:00.000Z
+ *                     endDate: 2025-06-01T00:00:00.000Z
+ *                     teamSize: 4
+ *                     repositoryUrl: https://github.com/example/
+ *                 workExperiences:
+ *                   - companyName: SEeds Tech
+ *                     position: Intern Backend Developer
+ *                     startDate: 2025-07-01T00:00:00.000Z
+ *                     endDate: 2025-09-01T00:00:00.000Z
+ *                     description: Implemented REST APIs and unit tests
+ *                     technologiesUsed:
+ *                       - Express
+ *                       - MongoDB
+ *                       - Jest
+ *                 introductionQuestions:
+ *                   preferredRoles:
+ *                     - preferredRole: Backend
+ *                     - preferredRole: Fullstack
+ *                   whyTheseRoles: I enjoy solving system design and API problems.
+ *                   futureGoals: Become a senior backend engineer in 3 years.
+ *                   favoriteTechnology: TypeScript
  *     responses:
  *       200:
  *         description: Candidate profile updated successfully

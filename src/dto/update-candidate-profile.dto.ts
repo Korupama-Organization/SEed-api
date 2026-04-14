@@ -1,16 +1,21 @@
 import {
+  IAcademicInfo,
   IAchievement,
-  IBasicInfo,
-  IEducation,
+  IIntroductionQuestions,
   ILanguage,
-  ISkills,
+  IProject,
+  ITechnicalSkill,
+  IWorkExperience,
 } from "../models/CandidateProfile";
 
 export interface UpdateCandidateProfileDto {
-  basicInfo?: IBasicInfo;
-  education?: IEducation;
-  strengths?: string;
-  skills?: ISkills;
+  academicInfo?: IAcademicInfo;
   languages?: ILanguage[];
   achievements?: IAchievement[];
+  advantagePoint?: string;
+  technicalSkills?: ITechnicalSkill[];
+  softSkills?: string[];
+  projects?: IProject[];
+  workExperiences?: IWorkExperience[];
+  introductionQuestions?: IIntroductionQuestions;
 }
