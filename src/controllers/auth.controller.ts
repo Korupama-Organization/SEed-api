@@ -5,11 +5,10 @@ import * as bcrypt from 'bcrypt';
 import {
     AuthenticationError,
     authenticateWithEncryptedPassword,
-    encryptPassword,
 } from 'uit-authenticator';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { REDIS_KEYS } from '../constants';
-import { deleteTempValue, getTempValue, setTempValue } from '../utils/redis';
+import { deleteTempValue, deleteTempValueIfMatch, setTempValue } from '../utils/redis';
 import {
     generateAccessToken,
     generateRefreshToken,
@@ -303,14 +302,13 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
 
-        const storedUserId = await getTempValue(getRefreshTokenKey(refreshToken));
-        if (storedUserId !== String(payload.sub)) {
+        const tokenValid = await deleteTempValueIfMatch(getRefreshTokenKey(refreshToken), String(payload.sub));
+        if (!tokenValid) {
             return res.status(401).json({ message: 'Refresh token has been revoked' });
         }
 
         const user = await User.findById(payload.sub);
         if (!user) {
-            await deleteTempValue(getRefreshTokenKey(refreshToken));
             return res.status(404).json({ message: 'User not found' });
         }
 
@@ -322,11 +320,8 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         const issuedAtMs = getTokenIssuedAt(payload) * 1000;
         const passwordUpdatedAtMs = user.normalAuth?.passwordUpdatedAt?.getTime() ?? 0;
         if (issuedAtMs < passwordUpdatedAtMs) {
-            await deleteTempValue(getRefreshTokenKey(refreshToken));
             return res.status(401).json({ message: 'Session has expired. Please log in again.' });
         }
-
-        await deleteTempValue(getRefreshTokenKey(refreshToken));
 
         const tokens = await issueAuthTokens(user);
         return res.json({
@@ -374,22 +369,3 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
-export const temporaryPasswordEncryption = async (req: Request, res: Response) => {
-    try {
-        const { password } = req.body as { password?: string };
-        if (!password) {
-            return res.status(400).json({ message: 'Missing password field' });
-        }
-        
-        const secret = process.env.UIT_AUTH_SECRET;
-        if (!secret) {
-            return res.status(500).json({ message: 'UIT_AUTH_SECRET is not configured' });
-        }
-
-        const encryptedPassword = await encryptPassword(password, secret);
-        return res.json({ encryptedPassword });
-    } catch (error) {
-        console.error('Password encryption error:', error);
-        return res.status(500).json({ message: 'Server error' });
-    }
-};

@@ -101,7 +101,6 @@ const options: swaggerJSDoc.Options = {
                 },
                 RefreshTokenRequest: {
                     type: 'object',
-                    required: ['refresh_token'],
                     properties: {
                         refresh_token: {
                             type: 'string',
