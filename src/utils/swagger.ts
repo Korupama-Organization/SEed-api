@@ -105,12 +105,12 @@ const options: swaggerJSDoc.Options = {
                         refresh_token: {
                             type: 'string',
                             example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                            description: 'Refresh token in snake_case format',
+                            description: 'Refresh token using the snake_case field name',
                         },
                         refreshToken: {
                             type: 'string',
                             example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                            description: 'Refresh token in camelCase format',
+                            description: 'Refresh token using the camelCase field name',
                         },
                     },
                 },
