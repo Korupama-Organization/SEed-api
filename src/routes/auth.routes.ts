@@ -129,7 +129,7 @@ router.post('/login', authRateLimiter, loginUser);
  *                 message:
  *                   type: string
  *               $ref: '#/components/schemas/ErrorResponse'
- */
+router.post('/refresh', authRateLimiter, refreshAccessToken);
 router.post('/refresh', refreshAccessToken);
 
 /**
