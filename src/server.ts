@@ -19,7 +19,7 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     customSiteTitle: "Studuy API Docs",
-    swaggerOptions: { persistAuthorization: true },
+    swaggerOptions: { persistAuthorization: false },
   }),
 );
 
