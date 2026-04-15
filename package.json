@@ -13,13 +13,14 @@
         "test:livestream": "jest --runInBand tests/livestream/reliability/livestream.reliability.integration.test.ts tests/livestream/realtime/livestream.controls.integration.test.ts tests/livestream/realtime/livestream.presence.integration.test.ts tests/livestream/access/livestream.join.integration.test.ts tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts"
     },
     "dependencies": {
+        "@nestjs/mongoose": "^11.0.4",
         "bcrypt": "^6.0.0",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.21.1",
         "express-rate-limit": "^8.3.1",
         "jsonwebtoken": "^9.0.3",
-        "mongoose": "^8.7.1",
+        "mongoose": "^8.23.0",
         "nodemailer": "^8.0.2",
         "rate-limit-redis": "^4.3.1",
         "redis": "^5.11.0",
