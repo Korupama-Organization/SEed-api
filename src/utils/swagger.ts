@@ -86,36 +86,71 @@ const options: swaggerJSDoc.Options = {
             otp: { type: "string", example: "123456" },
           },
         },
-        LoginRequest: {
+        HrRegisterRequest: {
           type: "object",
-          required: ["password"],
+          required: ["fullName", "email", "password"],
           properties: {
-            userID: {
+            fullName: {
               type: "string",
-              example: "23520408",
-              description: "UIT student ID for candidate login",
+              example: "Dang Duy Bao",
             },
             email: {
               type: "string",
               format: "email",
-              example: "hr@company.com",
-              description: "Email for normal_auth login",
+              example: "manager@seeds.vn",
+            },
+            password: {
+              type: "string",
+              minLength: 6,
+              example: "secret123",
+              description: "Plain password for recruiter login",
+            },
+            phone: {
+              type: "string",
+              example: "0988888888",
+              nullable: true,
+            },
+            gender: {
+              type: "string",
+              enum: ["Nam", "Nữ", "Khác"],
+              example: "Nam",
+            },
+            avatarUrl: {
+              type: "string",
+              format: "uri",
+              example: "https://example.com/avatar.jpg",
+            },
+            linkedinUrl: {
+              type: "string",
+              format: "uri",
+              example: "https://linkedin.com/in/manager-seeds",
+            },
+            githubUrl: {
+              type: "string",
+              format: "uri",
+              example: "https://github.com/manager-seeds",
+            },
+            facebookUrl: {
+              type: "string",
+              format: "uri",
+              example: "https://facebook.com/manager.seeds",
+            },
+          },
+        },
+        LoginRequest: {
+          type: "object",
+          required: ["identifier", "password"],
+          properties: {
+            identifier: {
+              type: "string",
+              example: "23520408",
+              description: "Recruiter email for normal_auth or UIT student ID for uit_auth",
             },
             password: {
               type: "string",
               example: "secret123",
               description:
-                "Encrypted UIT password for uit_auth, plain password for normal_auth",
-            },
-            authMethod: {
-              type: "string",
-              enum: ["uit_auth", "normal_auth"],
-              example: "uit_auth",
-            },
-            type: {
-              type: "string",
-              enum: ["candidate", "hr", "recruiter", "admin"],
-              example: "candidate",
+                "Encrypted UIT password when identifier is a student ID, plain password when identifier is an email",
             },
           },
         },
