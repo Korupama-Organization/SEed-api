@@ -23,6 +23,8 @@ type LoginMode = 'uit_auth' | 'normal_auth';
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 const normalizeUserId = (userID: string): string => userID.trim();
 const buildUitEmail = (studentID: string): string => `${normalizeUserId(studentID)}@gm.uit.edu.vn`;
+const resolveLoginMode = (identifier: string): LoginMode =>
+    identifier.includes('@') ? 'normal_auth' : 'uit_auth';
 
 const sanitizeUser = (user: IUser) => {
     const safe = user.toObject() as Record<string, any>;
@@ -32,29 +34,6 @@ const sanitizeUser = (user: IUser) => {
     }
 
     return safe;
-};
-
-const resolveLoginMode = (payload: {
-    authMethod?: string;
-    type?: string;
-    userID?: string;
-    email?: string;
-}): LoginMode | null => {
-    if (payload.authMethod === 'uit_auth' || payload.type === 'candidate') {
-        return 'uit_auth';
-    }
-
-    if (
-        payload.authMethod === 'normal_auth' ||
-        payload.type === 'hr' ||
-        payload.type === 'recruiter' ||
-        payload.type === 'admin' ||
-        payload.email
-    ) {
-        return 'normal_auth';
-    }
-
-    return null;
 };
 
 const assertActiveUser = (user: IUser): string | null => {
@@ -151,6 +130,91 @@ const loginNormalAuthUser = async (identifier: string, password: string) => {
     return { user };
 };
 
+export const registerHrUser = async (req: Request, res: Response) => {
+    try {
+        const {
+            fullName,
+            email,
+            password,
+            phone,
+            gender,
+            avatarUrl,
+            linkedinUrl,
+            githubUrl,
+            facebookUrl,
+        } = req.body as {
+            fullName?: string;
+            email?: string;
+            password?: string;
+            phone?: string | null;
+            gender?: 'Nam' | 'Nữ' | 'Khác';
+            avatarUrl?: string;
+            linkedinUrl?: string;
+            githubUrl?: string;
+            facebookUrl?: string;
+        };
+
+        const normalizedFullName = fullName?.trim();
+        const normalizedEmail = email ? normalizeEmail(email) : '';
+        const normalizedPassword = password?.trim();
+
+        if (!normalizedFullName || !normalizedEmail || !normalizedPassword) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        if (!normalizedEmail.includes('@')) {
+            return res.status(400).json({ message: 'Email is invalid' });
+        }
+
+        if (normalizedPassword.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters' });
+        }
+
+        const existingUser = await User.findOne({
+            $or: [
+                { 'normalAuth.email': normalizedEmail },
+                { 'contactInfo.email': normalizedEmail },
+            ],
+        });
+
+        if (existingUser) {
+            return res.status(409).json({ message: 'Email is already registered' });
+        }
+
+        const passwordHash = await bcrypt.hash(normalizedPassword, 10);
+        const now = new Date();
+
+        const user = await User.create({
+            role: 'recruiter',
+            authMethod: 'normal_auth',
+            status: 'active',
+            fullName: normalizedFullName,
+            gender,
+            avatarUrl: avatarUrl?.trim() || undefined,
+            normalAuth: {
+                email: normalizedEmail,
+                passwordHash,
+                passwordUpdatedAt: now,
+            },
+            contactInfo: {
+                email: normalizedEmail,
+                phone: phone?.trim() || null,
+                linkedinUrl: linkedinUrl?.trim() || undefined,
+                githubUrl: githubUrl?.trim() || undefined,
+                facebookUrl: facebookUrl?.trim() || undefined,
+            },
+        });
+
+        return res.status(201).json({
+            message: 'HR account created successfully',
+            user: sanitizeUser(user),
+        });
+    } catch (error) {
+        console.error('HR registration error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
 const loginUitAuthUser = async (studentID: string, encryptedPassword: string) => {
     const secret = process.env.UIT_AUTH_SECRET;
     if (!secret) {
@@ -206,31 +270,26 @@ const loginUitAuthUser = async (studentID: string, encryptedPassword: string) =>
 export const loginUser = async (req: Request, res: Response) => {
     try {
         const {
+            identifier,
             userID,
             email,
             password,
-            authMethod,
-            type,
         } = req.body as {
+            identifier?: string;
             userID?: string;
             email?: string;
             password?: string;
-            authMethod?: string;
-            type?: string;
         };
 
-        const identifier = userID || email;
-        if (!identifier || !password) {
+        const normalizedIdentifier = (identifier || userID || email || '').trim();
+        if (!normalizedIdentifier || !password) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        const loginMode = resolveLoginMode({ authMethod, type, userID, email });
-        if (!loginMode) {
-            return res.status(400).json({ message: 'Invalid auth method' });
-        }
+        const loginMode = resolveLoginMode(normalizedIdentifier);
 
         if (loginMode === 'normal_auth') {
-            const result = await loginNormalAuthUser(identifier, password);
+            const result = await loginNormalAuthUser(normalizedIdentifier, password);
             if (!result.user) {
                 return res.status(result.statusCode || 401).json({ message: result.error });
             }
@@ -238,7 +297,7 @@ export const loginUser = async (req: Request, res: Response) => {
             return res.json(await buildLoginResponse(result.user));
         }
 
-        const result = await loginUitAuthUser(identifier, password);
+        const result = await loginUitAuthUser(normalizedIdentifier, password);
         if (!result.user) {
             return res.status(result.statusCode || 401).json({ message: result.error });
         }

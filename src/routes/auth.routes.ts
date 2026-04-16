@@ -3,6 +3,7 @@ import {
     getCurrentUser,
     loginUser,
     logoutUser,
+    registerHrUser,
     refreshAccessToken,
     temporaryPasswordEncryption,
 } from '../controllers/auth.controller';
@@ -10,6 +11,42 @@ import { authRateLimiter } from '../middlewares/auth-rate-limit.middleware';
 import { requireAuth } from '../middlewares/auth.middleware';
 
 const router = Router();
+
+/**
+ * @swagger
+ * /api/auth/register/hr:
+ *   post:
+ *     summary: Register a new HR account
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/HrRegisterRequest'
+ *     responses:
+ *       201:
+ *         description: HR account created successfully
+ *       400:
+ *         description: Missing required fields or invalid payload
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Email is already registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/register/hr', authRateLimiter, registerHrUser);
 
 /**
  * @swagger
