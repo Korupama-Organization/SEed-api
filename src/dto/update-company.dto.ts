@@ -13,22 +13,25 @@ export interface UpdateCompanyDto {
     country: string;
   }>;
   workingEnvironment?: {
-    type: "On-site" | "Remote" | "Hybrid";
-    techStack: string[];
-    benefits: string[];
+    type?: "On-site" | "Remote" | "Hybrid";
+    techStack?: string[];
+    benefits?: string[];
   };
   socialMediaLinks?: Array<{
     platform: "LinkedIn" | "Facebook" | "Twitter" | "GitHub" | "Zalo" | "Khác";
     url: string;
   }>;
   recruitingPreferences?: {
-    targetRoles: string[];
-    targetLevels: Array<{ level: "Intern" | "Fresher" }>;
-    usingAIInterview: boolean;
-    usingManualInterview: boolean;
+    targetRoles?: string[];
+    targetLevels?: Array<{ level: "Intern" | "Fresher" }>;
+    usingAIInterview?: boolean;
+    usingManualInterview?: boolean;
   };
   partnerStatus?: "active" | "inactive";
 }
+
+const hasOwn = (obj: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key);
 
 const isObject = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -68,22 +71,45 @@ export const validateUpdateCompanyDto = (
       }))
     : undefined;
 
-  const workingEnvironment = isObject(payload.workingEnvironment)
-    ? {
-        type: (toOptionalTrimmedString(payload.workingEnvironment.type) ||
-          "") as "On-site" | "Remote" | "Hybrid",
-        techStack: Array.isArray(payload.workingEnvironment.techStack)
-          ? payload.workingEnvironment.techStack
-              .map((x) => toOptionalTrimmedString(x))
-              .filter((x): x is string => Boolean(x))
-          : [],
-        benefits: Array.isArray(payload.workingEnvironment.benefits)
-          ? payload.workingEnvironment.benefits
-              .map((x) => toOptionalTrimmedString(x))
-              .filter((x): x is string => Boolean(x))
-          : [],
+  let workingEnvironment: UpdateCompanyDto["workingEnvironment"] | undefined;
+  if (isObject(payload.workingEnvironment)) {
+    const next: NonNullable<UpdateCompanyDto["workingEnvironment"]> = {};
+
+    if (hasOwn(payload.workingEnvironment, "type")) {
+      const normalizedType = toOptionalTrimmedString(
+        payload.workingEnvironment.type,
+      );
+      if (!normalizedType) {
+        return { error: "workingEnvironment.type không hợp lệ." };
       }
-    : undefined;
+
+      next.type = normalizedType as "On-site" | "Remote" | "Hybrid";
+    }
+
+    if (hasOwn(payload.workingEnvironment, "techStack")) {
+      if (!Array.isArray(payload.workingEnvironment.techStack)) {
+        return { error: "workingEnvironment.techStack phải là mảng." };
+      }
+
+      next.techStack = payload.workingEnvironment.techStack
+        .map((x) => toOptionalTrimmedString(x))
+        .filter((x): x is string => Boolean(x));
+    }
+
+    if (hasOwn(payload.workingEnvironment, "benefits")) {
+      if (!Array.isArray(payload.workingEnvironment.benefits)) {
+        return { error: "workingEnvironment.benefits phải là mảng." };
+      }
+
+      next.benefits = payload.workingEnvironment.benefits
+        .map((x) => toOptionalTrimmedString(x))
+        .filter((x): x is string => Boolean(x));
+    }
+
+    if (Object.keys(next).length > 0) {
+      workingEnvironment = next;
+    }
+  }
 
   const socialMediaLinks = Array.isArray(payload.socialMediaLinks)
     ? payload.socialMediaLinks.filter(isObject).map((item) => ({
@@ -98,29 +124,63 @@ export const validateUpdateCompanyDto = (
       }))
     : undefined;
 
-  const recruitingPreferences = isObject(payload.recruitingPreferences)
-    ? {
-        targetRoles: Array.isArray(payload.recruitingPreferences.targetRoles)
-          ? payload.recruitingPreferences.targetRoles
-              .map((x) => toOptionalTrimmedString(x))
-              .filter((x): x is string => Boolean(x))
-          : [],
-        targetLevels: Array.isArray(payload.recruitingPreferences.targetLevels)
-          ? payload.recruitingPreferences.targetLevels
-              .filter(isObject)
-              .map((item) => ({
-                level: (toOptionalTrimmedString(item.level) || "") as
-                  | "Intern"
-                  | "Fresher",
-              }))
-          : [],
-        usingAIInterview: Boolean(
-          payload.recruitingPreferences.usingAIInterview,
-        ),
-        usingManualInterview:
-          payload.recruitingPreferences.usingManualInterview !== false,
+  let recruitingPreferences:
+    | UpdateCompanyDto["recruitingPreferences"]
+    | undefined;
+  if (isObject(payload.recruitingPreferences)) {
+    const next: NonNullable<UpdateCompanyDto["recruitingPreferences"]> = {};
+
+    if (hasOwn(payload.recruitingPreferences, "targetRoles")) {
+      if (!Array.isArray(payload.recruitingPreferences.targetRoles)) {
+        return { error: "recruitingPreferences.targetRoles phải là mảng." };
       }
-    : undefined;
+
+      next.targetRoles = payload.recruitingPreferences.targetRoles
+        .map((x) => toOptionalTrimmedString(x))
+        .filter((x): x is string => Boolean(x));
+    }
+
+    if (hasOwn(payload.recruitingPreferences, "targetLevels")) {
+      if (!Array.isArray(payload.recruitingPreferences.targetLevels)) {
+        return { error: "recruitingPreferences.targetLevels phải là mảng." };
+      }
+
+      next.targetLevels = payload.recruitingPreferences.targetLevels
+        .filter(isObject)
+        .map((item) => ({
+          level: (toOptionalTrimmedString(item.level) || "") as
+            | "Intern"
+            | "Fresher",
+        }));
+    }
+
+    if (hasOwn(payload.recruitingPreferences, "usingAIInterview")) {
+      if (typeof payload.recruitingPreferences.usingAIInterview !== "boolean") {
+        return {
+          error: "recruitingPreferences.usingAIInterview phải là boolean.",
+        };
+      }
+
+      next.usingAIInterview = payload.recruitingPreferences.usingAIInterview;
+    }
+
+    if (hasOwn(payload.recruitingPreferences, "usingManualInterview")) {
+      if (
+        typeof payload.recruitingPreferences.usingManualInterview !== "boolean"
+      ) {
+        return {
+          error: "recruitingPreferences.usingManualInterview phải là boolean.",
+        };
+      }
+
+      next.usingManualInterview =
+        payload.recruitingPreferences.usingManualInterview;
+    }
+
+    if (Object.keys(next).length > 0) {
+      recruitingPreferences = next;
+    }
+  }
 
   if (website && !/^https?:\/\//i.test(website)) {
     return { error: "website phải bắt đầu bằng http:// hoặc https://." };

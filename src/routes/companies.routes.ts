@@ -1,9 +1,9 @@
 import { Router } from "express";
 import {
-	createCompany,
-	deleteCompany,
-	getCompany,
-	updateCompany,
+  createCompany,
+  deleteCompany,
+  getCompany,
+  updateCompany,
 } from "../controllers/companies.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
@@ -337,28 +337,125 @@ router.get("/me", requireAuth, getCompany);
  *       required: true
  *       content:
  *         application/json:
+ *           examples:
+ *             updateBasicInfo:
+ *               summary: Update basic company information
+ *               value:
+ *                 name: SEeds Technology Vietnam
+ *                 shortName: SEeds VN
+ *                 website: https://seeds.vn
+ *                 email: talent@seeds.vn
+ *                 phone: "0909123456"
+ *                 address: Linh Trung, Thu Duc, Ho Chi Minh
+ *                 description: Updated profile for campus recruiting season
+ *                 partnerStatus: active
+ *             updateWorkingEnvironmentOnly:
+ *               summary: Partial update for nested working environment
+ *               value:
+ *                 workingEnvironment:
+ *                   type: Hybrid
+ *                   techStack:
+ *                     - Node.js
+ *                     - TypeScript
+ *                     - MongoDB
+ *             updateRecruitingPreferencesOnly:
+ *               summary: Partial update for recruiting preferences
+ *               value:
+ *                 recruitingPreferences:
+ *                   targetRoles:
+ *                     - Backend Developer
+ *                     - QA Engineer
+ *                   targetLevels:
+ *                     - level: Intern
+ *                     - level: Fresher
+ *                   usingAIInterview: true
+ *                   usingManualInterview: true
  *           schema:
  *             type: object
+ *             description: Partial update payload. Only send fields you want to change.
  *             properties:
  *               name:
  *                 type: string
+ *                 example: SEeds Technology Vietnam
  *               shortName:
  *                 type: string
+ *                 example: SEeds VN
  *               logoUrl:
  *                 type: string
+ *                 example: https://seeds.vn/logo-new.png
  *               website:
  *                 type: string
+ *                 example: https://seeds.vn
  *               email:
  *                 type: string
+ *                 example: talent@seeds.vn
  *               phone:
  *                 type: string
+ *                 example: "0909123456"
  *               address:
  *                 type: string
+ *                 example: Linh Trung, Thu Duc, Ho Chi Minh
  *               description:
  *                 type: string
+ *                 example: Updated profile for campus recruiting season
+ *               location:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     address:
+ *                       type: string
+ *                     city:
+ *                       type: string
+ *                     country:
+ *                       type: string
+ *               workingEnvironment:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [On-site, Remote, Hybrid]
+ *                   techStack:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   benefits:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *               socialMediaLinks:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     platform:
+ *                       type: string
+ *                       enum: [LinkedIn, Facebook, Twitter, GitHub, Zalo, Khác]
+ *                     url:
+ *                       type: string
+ *               recruitingPreferences:
+ *                 type: object
+ *                 properties:
+ *                   targetRoles:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   targetLevels:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         level:
+ *                           type: string
+ *                           enum: [Intern, Fresher]
+ *                   usingAIInterview:
+ *                     type: boolean
+ *                   usingManualInterview:
+ *                     type: boolean
  *               partnerStatus:
  *                 type: string
  *                 enum: [active, inactive]
+ *                 example: active
  *     responses:
  *       200:
  *         description: Company profile updated successfully

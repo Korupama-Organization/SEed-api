@@ -272,14 +272,56 @@ export const updateMyCompany = async (
   if (dto.email !== undefined) company.email = dto.email;
   if (dto.phone !== undefined) company.phone = dto.phone;
   if (dto.description !== undefined) company.description = dto.description;
-  if (dto.location !== undefined) company.location = dto.location;
-  if (dto.workingEnvironment !== undefined)
-    company.workingEnvironment = dto.workingEnvironment;
+
+  if (dto.location !== undefined) {
+    company.location = dto.location;
+  } else if (dto.address !== undefined) {
+    if (company.location.length > 0) {
+      company.location[0].address = dto.address;
+    } else {
+      company.location = [
+        {
+          address: dto.address,
+          city: "Unknown",
+          country: "Vietnam",
+        },
+      ];
+    }
+  }
+
+  if (dto.workingEnvironment !== undefined) {
+    company.workingEnvironment = {
+      type: dto.workingEnvironment.type ?? company.workingEnvironment.type,
+      techStack:
+        dto.workingEnvironment.techStack ??
+        company.workingEnvironment.techStack,
+      benefits:
+        dto.workingEnvironment.benefits ?? company.workingEnvironment.benefits,
+    };
+  }
+
   if (dto.socialMediaLinks !== undefined)
     company.socialMediaLinks = dto.socialMediaLinks;
-  if (dto.recruitingPreferences !== undefined)
-    company.recruitingPreferences = dto.recruitingPreferences;
-  if (dto.partnerStatus !== undefined) company.partnerStatus = dto.partnerStatus;
+
+  if (dto.recruitingPreferences !== undefined) {
+    company.recruitingPreferences = {
+      targetRoles:
+        dto.recruitingPreferences.targetRoles ??
+        company.recruitingPreferences.targetRoles,
+      targetLevels:
+        dto.recruitingPreferences.targetLevels ??
+        company.recruitingPreferences.targetLevels,
+      usingAIInterview:
+        dto.recruitingPreferences.usingAIInterview ??
+        company.recruitingPreferences.usingAIInterview,
+      usingManualInterview:
+        dto.recruitingPreferences.usingManualInterview ??
+        company.recruitingPreferences.usingManualInterview,
+    };
+  }
+
+  if (dto.partnerStatus !== undefined)
+    company.partnerStatus = dto.partnerStatus;
 
   await company.save();
   return company;
