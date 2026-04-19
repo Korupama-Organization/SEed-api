@@ -2,3 +2,4 @@ node_modules
 .env
 dist
 ./studuy-api
+.DS_Store
