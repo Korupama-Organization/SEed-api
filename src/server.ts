@@ -5,7 +5,6 @@ import connectDB from "./db/connect";
 import authRoutes from "./routes/auth.routes";
 import candidateProfileRoutes from "./routes/candidate-profile.routes";
 import companiesRoutes from "./routes/companies.routes";
-import usersRoutes from "./routes/users.routes";
 import { validateRequiredEnv } from "./utils/env-validation";
 import swaggerSpec from "./utils/swagger";
 import swaggerUi from "swagger-ui-express";
@@ -42,7 +41,6 @@ app.get("/", (_req: Request, res: Response) => {
 // app.use('/api/orders',  orderRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/candidate-profiles", candidateProfileRoutes);
-app.use("/api/users", usersRoutes);
 app.use("/api/companies", companiesRoutes);
 
 const start = async () => {
