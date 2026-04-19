@@ -59,8 +59,8 @@ export interface IJob extends Document {
 
 const RequirementsSchema = new Schema<IRequirements>(
     {
-        requiredSkills: [String],
-        preferredSkills: [String],
+        requiredSkills: [{ type: Schema.Types.ObjectId, required: true }],
+        preferredSkills: [{ type: Schema.Types.ObjectId, required: true }],
         requiredEducation: { type: String, enum: ['Năm 3', 'Năm 4/ Sắp tốt nghiệp', 'Đã tốt nghiệp', null] },
         minGPA: Number,
         requiredLanguages: [String],
