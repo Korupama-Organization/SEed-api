@@ -1,6 +1,4 @@
 import { Router } from "express";
-import { getMyProfile } from "../controllers/users.controller";
-import { requireAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -103,6 +101,7 @@ const router = Router();
  *       500:
  *         description: Server error
  */
-router.get("/me", requireAuth, getMyProfile);
+// Deprecated: /api/users/me is replaced by /api/auth/me to avoid duplicated profile APIs.
+// router.get("/me", requireAuth, getMyProfile);
 
 export default router;

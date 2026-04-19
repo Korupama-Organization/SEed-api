@@ -9,6 +9,7 @@ export const getMyProfile = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
+  // Deprecated: use GET /api/auth/me instead.
   try {
     const userId = req.auth?.userId;
     if (!userId) {

@@ -17,6 +17,7 @@ import {
     verifyRefreshToken,
 } from '../utils/jwt';
 import { IUser, User } from '../models/User';
+import { AuthServiceError, getProfile } from '../services/auth.service';
 
 type LoginMode = 'uit_auth' | 'normal_auth';
 
@@ -331,15 +332,13 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response) =
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        const user = await User.findById(auth.userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        const profile = await getProfile(auth.userId);
+        return res.json(profile);
+    } catch (error: any) {
+        if (error instanceof AuthServiceError) {
+            return res.status(error.statusCode).json({ message: error.message });
         }
 
-        return res.json({
-            user: sanitizeUser(user),
-        });
-    } catch (error) {
         console.error('Get current user error:', error);
         return res.status(500).json({ message: 'Server error' });
     }

@@ -13,6 +13,7 @@
         "test:livestream": "jest --runInBand tests/livestream/reliability/livestream.reliability.integration.test.ts tests/livestream/realtime/livestream.controls.integration.test.ts tests/livestream/realtime/livestream.presence.integration.test.ts tests/livestream/access/livestream.join.integration.test.ts tests/livestream/lifecycle/livestream.lifecycle.integration.test.ts"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1032.0",
         "@nestjs/mongoose": "^11.0.4",
         "bcrypt": "^6.0.0",
         "cors": "^2.8.5",
