@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { createCompany } from "../controllers/companies.controller";
+import {
+	createCompany,
+	deleteCompany,
+	getCompany,
+	updateCompany,
+} from "../controllers/companies.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
@@ -292,5 +297,120 @@ const router = Router();
  *         description: Server error
  */
 router.post("/", requireAuth, createCompany);
+
+/**
+ * @swagger
+ * /api/companies/me:
+ *   get:
+ *     summary: Get current user's company profile
+ *     tags: [Companies]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Company profile fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 company:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User has not joined any company
+ *       500:
+ *         description: Server error
+ */
+router.get("/me", requireAuth, getCompany);
+
+/**
+ * @swagger
+ * /api/companies/me:
+ *   patch:
+ *     summary: Update current user's company profile
+ *     tags: [Companies]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               shortName:
+ *                 type: string
+ *               logoUrl:
+ *                 type: string
+ *               website:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               partnerStatus:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Company profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 company:
+ *                   type: object
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Only manager can update company profile
+ *       404:
+ *         description: Company not found
+ *       500:
+ *         description: Server error
+ */
+router.patch("/me", requireAuth, updateCompany);
+
+/**
+ * @swagger
+ * /api/companies/me:
+ *   delete:
+ *     summary: Delete current user's company profile
+ *     tags: [Companies]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Company profile deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Only manager can delete company profile
+ *       404:
+ *         description: Company not found
+ *       500:
+ *         description: Server error
+ */
+router.delete("/me", requireAuth, deleteCompany);
 
 export default router;

@@ -1,5 +1,6 @@
 import { ClientSession, startSession } from "mongoose";
 import { CreateCompanyDto } from "../dto/create-company.dto";
+import { UpdateCompanyDto } from "../dto/update-company.dto";
 import { Company, ICompany } from "../models/Company";
 import { CompanyMember } from "../models/CompanyMember";
 import { IUser, User } from "../models/User";
@@ -220,6 +221,88 @@ export const createCompanyForNewbie = async (
 
     throw new CompanyOnboardingError(
       error?.message || "Failed to create company profile.",
+      500,
+    );
+  } finally {
+    await session.endSession();
+  }
+};
+
+const getCurrentUserCompanyMembership = async (userId: string) => {
+  const member = await CompanyMember.findOne({ userId }).populate("companyId");
+
+  if (!member) {
+    throw new CompanyOnboardingError("Bạn chưa thuộc công ty nào.", 404);
+  }
+
+  if (!member.companyId) {
+    throw new CompanyOnboardingError("Không tìm thấy thông tin công ty.", 404);
+  }
+
+  return member;
+};
+
+const assertManagerPermission = (membershipRole: string) => {
+  if (membershipRole !== "manager") {
+    throw new CompanyOnboardingError(
+      "Chỉ manager mới có quyền cập nhật/xóa công ty.",
+      403,
+    );
+  }
+};
+
+export const getMyCompany = async (userId: string): Promise<ICompany> => {
+  const member = await getCurrentUserCompanyMembership(userId);
+  return member.companyId as unknown as ICompany;
+};
+
+export const updateMyCompany = async (
+  userId: string,
+  dto: UpdateCompanyDto,
+): Promise<ICompany> => {
+  const member = await getCurrentUserCompanyMembership(userId);
+  assertManagerPermission(member.membershipRole);
+
+  const company = member.companyId as unknown as ICompany;
+
+  if (dto.name !== undefined) company.name = dto.name;
+  if (dto.shortName !== undefined) company.shortName = dto.shortName;
+  if (dto.logoUrl !== undefined) company.logoUrl = dto.logoUrl;
+  if (dto.website !== undefined) company.websiteUrl = dto.website;
+  if (dto.email !== undefined) company.email = dto.email;
+  if (dto.phone !== undefined) company.phone = dto.phone;
+  if (dto.description !== undefined) company.description = dto.description;
+  if (dto.location !== undefined) company.location = dto.location;
+  if (dto.workingEnvironment !== undefined)
+    company.workingEnvironment = dto.workingEnvironment;
+  if (dto.socialMediaLinks !== undefined)
+    company.socialMediaLinks = dto.socialMediaLinks;
+  if (dto.recruitingPreferences !== undefined)
+    company.recruitingPreferences = dto.recruitingPreferences;
+  if (dto.partnerStatus !== undefined) company.partnerStatus = dto.partnerStatus;
+
+  await company.save();
+  return company;
+};
+
+export const deleteMyCompany = async (userId: string): Promise<void> => {
+  const member = await getCurrentUserCompanyMembership(userId);
+  assertManagerPermission(member.membershipRole);
+
+  const company = member.companyId as unknown as ICompany;
+  const session = await startSession();
+
+  try {
+    session.startTransaction();
+
+    await CompanyMember.deleteMany({ companyId: company._id }).session(session);
+    await Company.findByIdAndDelete(company._id).session(session);
+
+    await session.commitTransaction();
+  } catch (error: any) {
+    await session.abortTransaction();
+    throw new CompanyOnboardingError(
+      error?.message || "Không thể xóa công ty.",
       500,
     );
   } finally {
