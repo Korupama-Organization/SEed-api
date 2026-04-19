@@ -1,8 +1,8 @@
 import {Schema, model, Types, Document} from 'mongoose';
 
 export interface IRequirements {
-    requiredSkills: string[];
-    preferredSkills: string[];
+    requiredSkills: Types.ObjectId[];
+    preferredSkills: Types.ObjectId[];
     requiredEducation: "Năm 3" | "Năm 4/ Sắp tốt nghiệp" | "Đã tốt nghiệp" | null;
     minGPA: number | null;
     requiredLanguages: string[];
