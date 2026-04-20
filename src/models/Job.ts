@@ -1,9 +1,9 @@
 import {Schema, model, Types, Document} from 'mongoose';
 
 export interface IRequirements {
-    requiredSkills: string[];
-    preferredSkills: string[];
-    requiredEducation: "Năm 3" | "Năm 4/ Sắp tốt nghiệp" | "Đã tốt nghiệp" | null;
+    requiredSkills: Types.ObjectId[];
+    preferredSkills: Types.ObjectId[];
+    requiredEducation?: "Năm 3" | "Năm 4/ Sắp tốt nghiệp" | "Đã tốt nghiệp" | null;
     minGPA: number | null;
     requiredLanguages: string[];
     preferredLanguages: string[];
@@ -59,8 +59,8 @@ export interface IJob extends Document {
 
 const RequirementsSchema = new Schema<IRequirements>(
     {
-        requiredSkills: [String],
-        preferredSkills: [String],
+        requiredSkills: [{ type: Schema.Types.ObjectId, ref: 'Skill', required: true }],
+        preferredSkills: [{ type: Schema.Types.ObjectId, ref: 'Skill', required: true }],
         requiredEducation: { type: String, enum: ['Năm 3', 'Năm 4/ Sắp tốt nghiệp', 'Đã tốt nghiệp', null] },
         minGPA: Number,
         requiredLanguages: [String],
