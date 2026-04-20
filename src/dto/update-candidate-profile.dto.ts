@@ -7,13 +7,22 @@ import {
   ITechnicalSkill,
   IWorkExperience,
 } from "../models/CandidateProfile";
+import { Types } from "mongoose";
+
+export interface UpdateTechnicalSkillDto {
+  category?: ITechnicalSkill["category"];
+  name?: string;
+  skillId?: Types.ObjectId | string;
+  yearsOfExperience: number;
+  confidence?: boolean;
+}
 
 export interface UpdateCandidateProfileDto {
   academicInfo?: IAcademicInfo;
   languages?: ILanguage[];
   achievements?: IAchievement[];
   advantagePoint?: string;
-  technicalSkills?: ITechnicalSkill[];
+  technicalSkills?: UpdateTechnicalSkillDto[];
   softSkills?: string[];
   projects?: IProject[];
   workExperiences?: IWorkExperience[];

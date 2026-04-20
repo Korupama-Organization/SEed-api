@@ -40,7 +40,11 @@ const router = Router();
  *                 advantagePoint: Fast learner and strong ownership mindset
  *                 technicalSkills:
  *                   - category: Framework
- *                     name: Express.js
+ *                     name: React
+ *                     yearsOfExperience: 2
+ *                     confidence: true
+ *                   - category: Ngôn ngữ lập trình
+ *                     name: .NET
  *                     yearsOfExperience: 2
  *                     confidence: true
  *                 softSkills:
@@ -80,6 +84,10 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Candidate profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CandidateProfilePatchResponse'
  *       400:
  *         description: Invalid payload, unknown fields, or schema validation error
  *       401:

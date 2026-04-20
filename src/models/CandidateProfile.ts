@@ -28,7 +28,7 @@ export interface ITechnicalSkill {
     | "Version Control"
     | "Công cụ quản lý dự án"
     | "Khác";
-  name: string;
+  skillId: Types.ObjectId;
   yearsOfExperience: number;
   confidence: boolean;
 }
@@ -130,7 +130,7 @@ const TechnicalSkillSchema = new Schema<ITechnicalSkill>(
       ],
       required: true,
     },
-    name: { type: String, required: true },
+    skillId: { type: Schema.Types.ObjectId, ref: "Skill", required: true },
     yearsOfExperience: { type: Number, required: true },
     confidence: { type: Boolean, default: true },
   },

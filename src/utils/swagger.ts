@@ -290,7 +290,7 @@ const options: swaggerJSDoc.Options = {
                     ],
                     example: "Framework",
                   },
-                  name: { type: "string", example: "Express.js" },
+                  name: { type: "string", example: "React" },
                   yearsOfExperience: { type: "number", example: 2 },
                   confidence: { type: "boolean", example: true },
                 },
@@ -436,18 +436,22 @@ const options: swaggerJSDoc.Options = {
             technicalSkills: [
               {
                 category: "Framework",
-                name: "Express.js",
+                name: "React",
                 yearsOfExperience: 2,
                 confidence: true,
               },
               {
-                category: "Database",
-                name: "MongoDB",
+                category: "Ngôn ngữ lập trình",
+                name: ".NET",
                 yearsOfExperience: 2,
                 confidence: true,
               },
             ],
-            softSkills: ["Communication", "Teamwork", "Problem solving"],
+            softSkills: [
+              "Communication",
+              "Teamwork",
+              "Problem solving",
+            ],
             projects: [
               {
                 name: "E-learning Platform",
@@ -480,6 +484,51 @@ const options: swaggerJSDoc.Options = {
               whyTheseRoles: "I enjoy solving system design and API problems.",
               futureGoals: "Become a senior backend engineer in 3 years.",
               favoriteTechnology: "TypeScript",
+            },
+          },
+        },
+        CandidateProfilePatchResponse: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              example: "Cập nhật CandidateProfile thành công.",
+            },
+            data: {
+              type: "object",
+              properties: {
+                _id: { type: "string", example: "65f1a2b3c4d5e6f7a8b9c0d1" },
+                userId: { type: "string", example: "65f1a2b3c4d5e6f7a8b9c0d0" },
+                technicalSkills: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      category: { type: "string", example: "Framework" },
+                      skillId: {
+                        type: "string",
+                        description: "ObjectId của Skill",
+                        example: "65f1a2b3c4d5e6f7a8b9c0d2",
+                      },
+                      name: { type: "string", example: "React" },
+                      yearsOfExperience: { type: "number", example: 2 },
+                      confidence: { type: "boolean", example: true },
+                    },
+                  },
+                },
+                softSkills: {
+                  type: "array",
+                  items: { type: "string" },
+                  example: ["Communication", "Teamwork"],
+                },
+              },
+            },
+            meta: {
+              type: "object",
+              properties: {
+                matchedCount: { type: "number", example: 1 },
+                modifiedCount: { type: "number", example: 1 },
+              },
             },
           },
         },
