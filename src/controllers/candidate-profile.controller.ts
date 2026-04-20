@@ -110,7 +110,9 @@ const resolveSkillByName = async (
 const resolveTechnicalSkills = async (
   profilePayload: UpdateCandidateProfileDto,
 ) => {
-  if (!Object.prototype.hasOwnProperty.call(profilePayload, "technicalSkills")) {
+  if (
+    !Object.prototype.hasOwnProperty.call(profilePayload, "technicalSkills")
+  ) {
     return;
   }
 
@@ -132,7 +134,11 @@ const resolveTechnicalSkills = async (
       ? inputCategory
       : "Khác";
 
-    let resolvedSkill: { _id: Types.ObjectId; skill_name: string; category: string } | null = null;
+    let resolvedSkill: {
+      _id: Types.ObjectId;
+      skill_name: string;
+      category: string;
+    } | null = null;
 
     if (isValidObjectIdValue(payloadItem?.skillId)) {
       const skillId = normalizeSkillId(payloadItem.skillId);
@@ -151,7 +157,10 @@ const resolveTechnicalSkills = async (
         skill_name: foundById.skill_name,
         category: foundById.category,
       };
-    } else if (typeof payloadItem?.name === "string" && payloadItem.name.trim()) {
+    } else if (
+      typeof payloadItem?.name === "string" &&
+      payloadItem.name.trim()
+    ) {
       resolvedSkill = await resolveSkillByName(payloadItem.name, category);
     } else {
       throw new Error(
@@ -213,15 +222,17 @@ const buildProfileResponse = (profile: any) => {
   const technicalSkills = Array.isArray(profile.technicalSkills)
     ? profile.technicalSkills.map((item: any) => {
         const populatedSkill = isObject(item?.skillId)
-          ? (item.skillId as { _id?: Types.ObjectId; skill_name?: string; category?: string })
+          ? (item.skillId as {
+              _id?: Types.ObjectId;
+              skill_name?: string;
+              category?: string;
+            })
           : null;
 
         const rawSkillId = populatedSkill?._id ?? item?.skillId;
 
         return {
-          category: item?.category,
           skillId: rawSkillId ? String(rawSkillId) : null,
-          name: populatedSkill?.skill_name ?? null,
           yearsOfExperience: item?.yearsOfExperience,
           confidence: item?.confidence,
           skill: populatedSkill
@@ -353,9 +364,7 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
         ...profilePayload,
       });
 
-      updatedProfile = await CandidateProfile.findById(
-        createdProfile._id,
-      )
+      updatedProfile = await CandidateProfile.findById(createdProfile._id)
         .populate({
           path: "technicalSkills.skillId",
           select: "_id skill_name category",

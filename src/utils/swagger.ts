@@ -144,7 +144,8 @@ const options: swaggerJSDoc.Options = {
             identifier: {
               type: "string",
               example: "23520408",
-              description: "Recruiter email for normal_auth or UIT student ID for uit_auth",
+              description:
+                "Recruiter email for normal_auth or UIT student ID for uit_auth",
             },
             password: {
               type: "string",
@@ -155,20 +156,20 @@ const options: swaggerJSDoc.Options = {
           },
         },
         RefreshTokenRequest: {
-                    type: 'object',
-                    properties: {
-                        refresh_token: {
-                            type: 'string',
-                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                            description: 'Refresh token using the snake_case field name',
-                        },
-                        refreshToken: {
-                            type: 'string',
-                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                            description: 'Refresh token using the camelCase field name',
-                        },
-                    },
-                },
+          type: "object",
+          properties: {
+            refresh_token: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              description: "Refresh token using the snake_case field name",
+            },
+            refreshToken: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              description: "Refresh token using the camelCase field name",
+            },
+          },
+        },
         ForgotPasswordRequest: {
           type: "object",
           required: ["email"],
@@ -447,11 +448,7 @@ const options: swaggerJSDoc.Options = {
                 confidence: true,
               },
             ],
-            softSkills: [
-              "Communication",
-              "Teamwork",
-              "Problem solving",
-            ],
+            softSkills: ["Communication", "Teamwork", "Problem solving"],
             projects: [
               {
                 name: "E-learning Platform",
