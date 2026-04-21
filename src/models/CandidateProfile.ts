@@ -28,7 +28,7 @@ export interface ITechnicalSkill {
     | "Version Control"
     | "Công cụ quản lý dự án"
     | "Khác";
-  name: string;
+  skillId: Types.ObjectId;
   yearsOfExperience: number;
   confidence: boolean;
 }
@@ -36,7 +36,7 @@ export interface ITechnicalSkill {
 export interface IProject {
   name: string;
   description: string;
-  technologies: string[];
+  technologies: Types.ObjectId[];
   role: string;
   contribution: string;
   startDate: Date;
@@ -52,7 +52,7 @@ export interface IWorkExperience {
   startDate: Date;
   endDate: Date;
   description: string;
-  technologiesUsed: string[];
+  technologiesUsed: Types.ObjectId[];
 }
 
 export interface IIntroductionQuestions {
@@ -130,7 +130,7 @@ const TechnicalSkillSchema = new Schema<ITechnicalSkill>(
       ],
       required: true,
     },
-    name: { type: String, required: true },
+    skillId: { type: Schema.Types.ObjectId, ref: "Skill", required: true },
     yearsOfExperience: { type: Number, required: true },
     confidence: { type: Boolean, default: true },
   },
@@ -141,7 +141,7 @@ const ProjectSchema = new Schema<IProject>(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
-    technologies: { type: [String], required: true },
+    technologies: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
     role: { type: String, required: true },
     contribution: { type: String, required: true },
     startDate: { type: Date, required: true },
@@ -160,7 +160,7 @@ const WorkExperienceSchema = new Schema<IWorkExperience>(
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     description: { type: String, required: true },
-    technologiesUsed: { type: [String], required: true },
+    technologiesUsed: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
   },
   { _id: false },
 );

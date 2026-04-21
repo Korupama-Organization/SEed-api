@@ -144,7 +144,8 @@ const options: swaggerJSDoc.Options = {
             identifier: {
               type: "string",
               example: "23520408",
-              description: "Recruiter email for normal_auth or UIT student ID for uit_auth",
+              description:
+                "Recruiter email for normal_auth or UIT student ID for uit_auth",
             },
             password: {
               type: "string",
@@ -155,20 +156,20 @@ const options: swaggerJSDoc.Options = {
           },
         },
         RefreshTokenRequest: {
-                    type: 'object',
-                    properties: {
-                        refresh_token: {
-                            type: 'string',
-                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                            description: 'Refresh token using the snake_case field name',
-                        },
-                        refreshToken: {
-                            type: 'string',
-                            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                            description: 'Refresh token using the camelCase field name',
-                        },
-                    },
-                },
+          type: "object",
+          properties: {
+            refresh_token: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              description: "Refresh token using the snake_case field name",
+            },
+            refreshToken: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              description: "Refresh token using the camelCase field name",
+            },
+          },
+        },
         ForgotPasswordRequest: {
           type: "object",
           required: ["email"],
@@ -290,7 +291,7 @@ const options: swaggerJSDoc.Options = {
                     ],
                     example: "Framework",
                   },
-                  name: { type: "string", example: "Express.js" },
+                  name: { type: "string", example: "React" },
                   yearsOfExperience: { type: "number", example: 2 },
                   confidence: { type: "boolean", example: true },
                 },
@@ -313,8 +314,45 @@ const options: swaggerJSDoc.Options = {
                   },
                   technologies: {
                     type: "array",
-                    items: { type: "string" },
-                    example: ["Node.js", "TypeScript", "MongoDB"],
+                    items: {
+                      oneOf: [
+                        {
+                          type: "string",
+                          description: "Skill ObjectId",
+                          example: "65f1a2b3c4d5e6f7a8b9c0d2",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            skillId: {
+                              type: "string",
+                              description: "Skill ObjectId",
+                              example: "65f1a2b3c4d5e6f7a8b9c0d2",
+                            },
+                            name: { type: "string", example: "Node.js" },
+                            category: {
+                              type: "string",
+                              enum: [
+                                "Ngôn ngữ lập trình",
+                                "Framework",
+                                "OS",
+                                "Database",
+                                "Cloud",
+                                "Version Control",
+                                "Công cụ quản lý dự án",
+                                "Khác",
+                              ],
+                              example: "Ngôn ngữ lập trình",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                    example: [
+                      { name: "Node.js", category: "Ngôn ngữ lập trình" },
+                      "65f1a2b3c4d5e6f7a8b9c0d2",
+                      { name: "MongoDB", category: "Database" },
+                    ],
                   },
                   role: { type: "string", example: "Backend Developer" },
                   contribution: {
@@ -369,8 +407,45 @@ const options: swaggerJSDoc.Options = {
                   },
                   technologiesUsed: {
                     type: "array",
-                    items: { type: "string" },
-                    example: ["Express", "MongoDB", "Jest"],
+                    items: {
+                      oneOf: [
+                        {
+                          type: "string",
+                          description: "Skill ObjectId",
+                          example: "65f1a2b3c4d5e6f7a8b9c0d3",
+                        },
+                        {
+                          type: "object",
+                          properties: {
+                            skillId: {
+                              type: "string",
+                              description: "Skill ObjectId",
+                              example: "65f1a2b3c4d5e6f7a8b9c0d3",
+                            },
+                            name: { type: "string", example: "Express" },
+                            category: {
+                              type: "string",
+                              enum: [
+                                "Ngôn ngữ lập trình",
+                                "Framework",
+                                "OS",
+                                "Database",
+                                "Cloud",
+                                "Version Control",
+                                "Công cụ quản lý dự án",
+                                "Khác",
+                              ],
+                              example: "Framework",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                    example: [
+                      { name: "Express", category: "Framework" },
+                      "65f1a2b3c4d5e6f7a8b9c0d3",
+                      { name: "Jest", category: "Công cụ quản lý dự án" },
+                    ],
                   },
                 },
               },
@@ -436,13 +511,13 @@ const options: swaggerJSDoc.Options = {
             technicalSkills: [
               {
                 category: "Framework",
-                name: "Express.js",
+                name: "React",
                 yearsOfExperience: 2,
                 confidence: true,
               },
               {
-                category: "Database",
-                name: "MongoDB",
+                category: "Ngôn ngữ lập trình",
+                name: ".NET",
                 yearsOfExperience: 2,
                 confidence: true,
               },
@@ -452,7 +527,11 @@ const options: swaggerJSDoc.Options = {
               {
                 name: "E-learning Platform",
                 description: "Build LMS backend with Node.js and MongoDB",
-                technologies: ["Node.js", "TypeScript", "MongoDB"],
+                technologies: [
+                  { name: "Node.js", category: "Ngôn ngữ lập trình" },
+                  "65f1a2b3c4d5e6f7a8b9c0d2",
+                  { name: "MongoDB", category: "Database" },
+                ],
                 role: "Backend Developer",
                 contribution: "Designed API and database schema",
                 startDate: "2025-01-01T00:00:00.000Z",
@@ -469,7 +548,11 @@ const options: swaggerJSDoc.Options = {
                 startDate: "2025-07-01T00:00:00.000Z",
                 endDate: "2025-09-01T00:00:00.000Z",
                 description: "Implemented REST APIs and unit tests",
-                technologiesUsed: ["Express", "MongoDB", "Jest"],
+                technologiesUsed: [
+                  { name: "Express", category: "Framework" },
+                  "65f1a2b3c4d5e6f7a8b9c0d3",
+                  { name: "Jest", category: "Công cụ quản lý dự án" },
+                ],
               },
             ],
             introductionQuestions: {
@@ -480,6 +563,116 @@ const options: swaggerJSDoc.Options = {
               whyTheseRoles: "I enjoy solving system design and API problems.",
               futureGoals: "Become a senior backend engineer in 3 years.",
               favoriteTechnology: "TypeScript",
+            },
+          },
+        },
+        CandidateProfilePatchResponse: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              example: "Cập nhật CandidateProfile thành công.",
+            },
+            data: {
+              type: "object",
+              properties: {
+                _id: { type: "string", example: "65f1a2b3c4d5e6f7a8b9c0d1" },
+                userId: { type: "string", example: "65f1a2b3c4d5e6f7a8b9c0d0" },
+                technicalSkills: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      category: { type: "string", example: "Framework" },
+                      skillId: {
+                        type: "string",
+                        description: "ObjectId của Skill",
+                        example: "65f1a2b3c4d5e6f7a8b9c0d2",
+                      },
+                      name: { type: "string", example: "React" },
+                      yearsOfExperience: { type: "number", example: 2 },
+                      confidence: { type: "boolean", example: true },
+                    },
+                  },
+                },
+                softSkills: {
+                  type: "array",
+                  items: { type: "string" },
+                  example: ["Communication", "Teamwork"],
+                },
+                projects: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string", example: "E-learning Platform" },
+                      technologies: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                          description: "Skill ObjectId",
+                          example: "65f1a2b3c4d5e6f7a8b9c0d2",
+                        },
+                      },
+                      technologySkills: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            _id: {
+                              type: "string",
+                              example: "65f1a2b3c4d5e6f7a8b9c0d2",
+                            },
+                            name: { type: "string", example: "Node.js" },
+                            category: {
+                              type: "string",
+                              example: "Ngôn ngữ lập trình",
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                workExperiences: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      companyName: { type: "string", example: "SEeds Tech" },
+                      technologiesUsed: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                          description: "Skill ObjectId",
+                          example: "65f1a2b3c4d5e6f7a8b9c0d3",
+                        },
+                      },
+                      technologyUsedSkills: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            _id: {
+                              type: "string",
+                              example: "65f1a2b3c4d5e6f7a8b9c0d3",
+                            },
+                            name: { type: "string", example: "Express" },
+                            category: { type: "string", example: "Framework" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            meta: {
+              type: "object",
+              properties: {
+                matchedCount: { type: "number", example: 1 },
+                modifiedCount: { type: "number", example: 1 },
+              },
             },
           },
         },
