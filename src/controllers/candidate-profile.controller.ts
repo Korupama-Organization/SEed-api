@@ -3,6 +3,7 @@ import { CandidateProfile } from "../models/CandidateProfile";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import {
   UpdateCandidateProfileDto,
+  UpdateSkillReferenceDto,
   UpdateTechnicalSkillDto,
 } from "../dto/update-candidate-profile.dto";
 import { Types } from "mongoose";
@@ -38,6 +39,13 @@ const TECHNICAL_SKILL_CATEGORIES = [
 ] as const;
 
 type TechnicalSkillCategory = (typeof TECHNICAL_SKILL_CATEGORIES)[number];
+
+class RequestValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RequestValidationError";
+  }
+}
 
 const isValidObjectIdValue = (value: unknown): boolean => {
   if (value instanceof Types.ObjectId) {
@@ -117,7 +125,7 @@ const resolveTechnicalSkills = async (
   }
 
   if (!Array.isArray(profilePayload.technicalSkills)) {
-    throw new Error("technicalSkills phải là mảng.");
+    throw new RequestValidationError("technicalSkills phải là mảng.");
   }
 
   const resolvedTechnicalSkills = [];
@@ -126,7 +134,9 @@ const resolveTechnicalSkills = async (
     const payloadItem = technicalSkill as UpdateTechnicalSkillDto;
 
     if (typeof payloadItem?.yearsOfExperience !== "number") {
-      throw new Error("technicalSkills.yearsOfExperience phải là số.");
+      throw new RequestValidationError(
+        "technicalSkills.yearsOfExperience phải là số.",
+      );
     }
 
     const inputCategory = payloadItem?.category;
@@ -149,7 +159,9 @@ const resolveTechnicalSkills = async (
       }).lean();
 
       if (!foundById) {
-        throw new Error(`Không tìm thấy skill với id ${skillId}.`);
+        throw new RequestValidationError(
+          `Không tìm thấy skill với id ${skillId}.`,
+        );
       }
 
       resolvedSkill = {
@@ -163,7 +175,7 @@ const resolveTechnicalSkills = async (
     ) {
       resolvedSkill = await resolveSkillByName(payloadItem.name, category);
     } else {
-      throw new Error(
+      throw new RequestValidationError(
         "Mỗi technicalSkills item cần có skillId hợp lệ hoặc name (tên skill).",
       );
     }
@@ -173,13 +185,13 @@ const resolveTechnicalSkills = async (
       : (resolvedSkill.category as TechnicalSkillCategory);
 
     if (!isTechnicalSkillCategory(finalCategory)) {
-      throw new Error(
+      throw new RequestValidationError(
         `Category không hợp lệ cho skill ${resolvedSkill.skill_name}.`,
       );
     }
 
     if (finalCategory !== resolvedSkill.category) {
-      throw new Error(
+      throw new RequestValidationError(
         `technicalSkills category không khớp với skill ${resolvedSkill.skill_name}. category từ DB: ${resolvedSkill.category}.`,
       );
     }
@@ -198,18 +210,175 @@ const resolveTechnicalSkills = async (
   profilePayload.technicalSkills = resolvedTechnicalSkills as any;
 };
 
+const resolveSkillReference = async (
+  value: unknown,
+  fallbackCategory: TechnicalSkillCategory,
+  fieldPath: string,
+): Promise<string> => {
+  if (isValidObjectIdValue(value)) {
+    const skillId = normalizeSkillId(value);
+    const foundById = await Skill.findById(skillId, {
+      _id: 1,
+      skill_name: 1,
+      category: 1,
+    }).lean();
+
+    if (!foundById) {
+      throw new RequestValidationError(
+        `Không tìm thấy skill với id ${skillId} tại ${fieldPath}.`,
+      );
+    }
+
+    return String(foundById._id);
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const resolvedSkill = await resolveSkillByName(value, fallbackCategory);
+    return String(resolvedSkill._id);
+  }
+
+  if (isObject(value)) {
+    const payload = value as UpdateSkillReferenceDto;
+
+    if (isValidObjectIdValue(payload.skillId)) {
+      const skillId = normalizeSkillId(payload.skillId);
+      const foundById = await Skill.findById(skillId, {
+        _id: 1,
+        skill_name: 1,
+        category: 1,
+      }).lean();
+
+      if (!foundById) {
+        throw new RequestValidationError(
+          `Không tìm thấy skill với id ${skillId} tại ${fieldPath}.`,
+        );
+      }
+
+      return String(foundById._id);
+    }
+
+    if (typeof payload.name === "string" && payload.name.trim()) {
+      const category = isTechnicalSkillCategory(payload.category)
+        ? payload.category
+        : fallbackCategory;
+      const resolvedSkill = await resolveSkillByName(payload.name, category);
+
+      return String(resolvedSkill._id);
+    }
+  }
+
+  throw new RequestValidationError(
+    `${fieldPath} phải là Skill ObjectId hoặc object { skillId | name, category? } hợp lệ.`,
+  );
+};
+
+const resolveProjectAndWorkExperienceSkills = async (
+  profilePayload: UpdateCandidateProfileDto,
+) => {
+  if (Object.prototype.hasOwnProperty.call(profilePayload, "projects")) {
+    if (!Array.isArray(profilePayload.projects)) {
+      throw new RequestValidationError("projects phải là mảng.");
+    }
+
+    const resolvedProjects = [];
+
+    for (let index = 0; index < profilePayload.projects.length; index += 1) {
+      const project = profilePayload.projects[index] as unknown as Record<
+        string,
+        unknown
+      >;
+      const technologies = project?.technologies;
+
+      if (!Array.isArray(technologies)) {
+        throw new RequestValidationError(
+          `projects[${index}].technologies phải là mảng.`,
+        );
+      }
+
+      const resolvedTechnologies = [];
+      for (
+        let skillIndex = 0;
+        skillIndex < technologies.length;
+        skillIndex += 1
+      ) {
+        const resolvedSkillId = await resolveSkillReference(
+          technologies[skillIndex],
+          "Khác",
+          `projects[${index}].technologies[${skillIndex}]`,
+        );
+        resolvedTechnologies.push(resolvedSkillId);
+      }
+
+      resolvedProjects.push({
+        ...project,
+        technologies: resolvedTechnologies,
+      });
+    }
+
+    profilePayload.projects = resolvedProjects as any;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(profilePayload, "workExperiences")) {
+    if (!Array.isArray(profilePayload.workExperiences)) {
+      throw new RequestValidationError("workExperiences phải là mảng.");
+    }
+
+    const resolvedWorkExperiences = [];
+
+    for (
+      let index = 0;
+      index < profilePayload.workExperiences.length;
+      index += 1
+    ) {
+      const workExperience = profilePayload.workExperiences[
+        index
+      ] as unknown as Record<string, unknown>;
+      const technologiesUsed = workExperience?.technologiesUsed;
+
+      if (!Array.isArray(technologiesUsed)) {
+        throw new RequestValidationError(
+          `workExperiences[${index}].technologiesUsed phải là mảng.`,
+        );
+      }
+
+      const resolvedTechnologiesUsed = [];
+      for (
+        let skillIndex = 0;
+        skillIndex < technologiesUsed.length;
+        skillIndex += 1
+      ) {
+        const resolvedSkillId = await resolveSkillReference(
+          technologiesUsed[skillIndex],
+          "Khác",
+          `workExperiences[${index}].technologiesUsed[${skillIndex}]`,
+        );
+        resolvedTechnologiesUsed.push(resolvedSkillId);
+      }
+
+      resolvedWorkExperiences.push({
+        ...workExperience,
+        technologiesUsed: resolvedTechnologiesUsed,
+      });
+    }
+
+    profilePayload.workExperiences = resolvedWorkExperiences as any;
+  }
+};
+
 const validateSoftSkills = (profilePayload: UpdateCandidateProfileDto) => {
   if (!Object.prototype.hasOwnProperty.call(profilePayload, "softSkills")) {
     return;
   }
 
   if (!Array.isArray(profilePayload.softSkills)) {
-    throw new Error("softSkills phải là mảng string.");
+    throw new RequestValidationError("softSkills phải là mảng string.");
   }
 
   for (const softSkill of profilePayload.softSkills) {
     if (typeof softSkill !== "string" || softSkill.trim() === "") {
-      throw new Error("Mỗi phần tử softSkills phải là string hợp lệ.");
+      throw new RequestValidationError(
+        "Mỗi phần tử softSkills phải là string hợp lệ.",
+      );
     }
   }
 };
@@ -250,12 +419,82 @@ const buildProfileResponse = (profile: any) => {
     ? profile.softSkills.map((item: unknown) => String(item))
     : [];
 
+  const projectSkillMap = new Map<
+    string,
+    { _id: string; name: string; category: string }
+  >();
+  for (const skill of Array.isArray(profile?.projectTechnologySkills)
+    ? profile.projectTechnologySkills
+    : []) {
+    if (!skill?._id) {
+      continue;
+    }
+
+    projectSkillMap.set(String(skill._id), {
+      _id: String(skill._id),
+      name: String(skill.skill_name ?? ""),
+      category: String(skill.category ?? "Khác"),
+    });
+  }
+
+  const workExperienceSkillMap = new Map<
+    string,
+    { _id: string; name: string; category: string }
+  >();
+  for (const skill of Array.isArray(profile?.workExperienceTechnologySkills)
+    ? profile.workExperienceTechnologySkills
+    : []) {
+    if (!skill?._id) {
+      continue;
+    }
+
+    workExperienceSkillMap.set(String(skill._id), {
+      _id: String(skill._id),
+      name: String(skill.skill_name ?? ""),
+      category: String(skill.category ?? "Khác"),
+    });
+  }
+
+  const projects = Array.isArray(profile.projects)
+    ? profile.projects.map((project: any) => {
+        const technologyIds = Array.isArray(project?.technologies)
+          ? project.technologies.map((item: unknown) => String(item))
+          : [];
+
+        return {
+          ...project,
+          technologies: technologyIds,
+          technologySkills: technologyIds
+            .map((id: string) => projectSkillMap.get(id))
+            .filter(Boolean),
+        };
+      })
+    : [];
+
+  const workExperiences = Array.isArray(profile.workExperiences)
+    ? profile.workExperiences.map((workExperience: any) => {
+        const technologyIds = Array.isArray(workExperience?.technologiesUsed)
+          ? workExperience.technologiesUsed.map((item: unknown) => String(item))
+          : [];
+
+        return {
+          ...workExperience,
+          technologiesUsed: technologyIds,
+          technologyUsedSkills: technologyIds
+            .map((id: string) => workExperienceSkillMap.get(id))
+            .filter(Boolean),
+        };
+      })
+    : [];
+
   return {
     ...profile,
     _id: profile._id ? String(profile._id) : profile._id,
     userId: profile.userId ? String(profile.userId) : profile.userId,
     technicalSkills,
     softSkills,
+    projects,
+    workExperiences,
   };
 };
 
@@ -316,6 +555,7 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
   try {
     const userObjectId = new Types.ObjectId(authReq.auth.userId);
     await resolveTechnicalSkills(profilePayload);
+    await resolveProjectAndWorkExperienceSkills(profilePayload);
     validateSoftSkills(profilePayload);
 
     const existingProfile = await CandidateProfile.findOne({
@@ -382,13 +622,70 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
       });
     }
 
+    const projectSkillIds = Array.isArray(updatedProfile.projects)
+      ? updatedProfile.projects.flatMap((project: any) =>
+          Array.isArray(project?.technologies)
+            ? project.technologies
+                .filter((value: unknown) => isValidObjectIdValue(value))
+                .map((value: unknown) => normalizeSkillId(value))
+            : [],
+        )
+      : [];
+
+    const workExperienceSkillIds = Array.isArray(updatedProfile.workExperiences)
+      ? updatedProfile.workExperiences.flatMap((workExperience: any) =>
+          Array.isArray(workExperience?.technologiesUsed)
+            ? workExperience.technologiesUsed
+                .filter((value: unknown) => isValidObjectIdValue(value))
+                .map((value: unknown) => normalizeSkillId(value))
+            : [],
+        )
+      : [];
+
+    const uniqueProjectSkillIds = [...new Set(projectSkillIds)];
+    const uniqueWorkExperienceSkillIds = [...new Set(workExperienceSkillIds)];
+
+    const [projectTechnologySkills, workExperienceTechnologySkills] =
+      await Promise.all([
+        uniqueProjectSkillIds.length > 0
+          ? Skill.find(
+              { _id: { $in: uniqueProjectSkillIds } },
+              {
+                _id: 1,
+                skill_name: 1,
+                category: 1,
+              },
+            ).lean()
+          : Promise.resolve([]),
+        uniqueWorkExperienceSkillIds.length > 0
+          ? Skill.find(
+              { _id: { $in: uniqueWorkExperienceSkillIds } },
+              {
+                _id: 1,
+                skill_name: 1,
+                category: 1,
+              },
+            ).lean()
+          : Promise.resolve([]),
+      ]);
+
+    const responseProfile = {
+      ...updatedProfile,
+      projectTechnologySkills,
+      workExperienceTechnologySkills,
+    };
+
     return res.status(200).json({
       message: "Cập nhật CandidateProfile thành công.",
-      data: buildProfileResponse(updatedProfile),
+      data: buildProfileResponse(responseProfile),
       meta: updateMeta,
     });
   } catch (error: any) {
     if (error?.name === "ValidationError") {
+      return res.status(400).json({ error: error.message });
+    }
+
+    if (error instanceof RequestValidationError) {
       return res.status(400).json({ error: error.message });
     }
 

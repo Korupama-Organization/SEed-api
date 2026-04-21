@@ -17,6 +17,28 @@ export interface UpdateTechnicalSkillDto {
   confidence?: boolean;
 }
 
+export interface UpdateSkillReferenceDto {
+  skillId?: Types.ObjectId | string;
+  name?: string;
+  category?: ITechnicalSkill["category"];
+}
+
+export type UpdateSkillReferenceInput =
+  | Types.ObjectId
+  | string
+  | UpdateSkillReferenceDto;
+
+export type UpdateProjectDto = Omit<IProject, "technologies"> & {
+  technologies: UpdateSkillReferenceInput[];
+};
+
+export type UpdateWorkExperienceDto = Omit<
+  IWorkExperience,
+  "technologiesUsed"
+> & {
+  technologiesUsed: UpdateSkillReferenceInput[];
+};
+
 export interface UpdateCandidateProfileDto {
   academicInfo?: IAcademicInfo;
   languages?: ILanguage[];
@@ -24,7 +46,7 @@ export interface UpdateCandidateProfileDto {
   advantagePoint?: string;
   technicalSkills?: UpdateTechnicalSkillDto[];
   softSkills?: string[];
-  projects?: IProject[];
-  workExperiences?: IWorkExperience[];
+  projects?: UpdateProjectDto[];
+  workExperiences?: UpdateWorkExperienceDto[];
   introductionQuestions?: IIntroductionQuestions;
 }
