@@ -114,7 +114,7 @@ const router = Router();
  *       500:
  *         description: Server error
  */
-router.get("/", getListJobs);
+router.get("/", requireAuth, getListJobs);
 
 /**
  * @swagger
@@ -208,7 +208,7 @@ router.get("/", getListJobs);
  *       500:
  *         description: Server error
  */
-router.get("/:id", getJobDetail);
+router.get("/:id", requireAuth, getJobDetail);
 
 // Các endpoint thao tác với job (chưa code detail, chỉ giữ khung)
 router.post("/", requireAuth); 
