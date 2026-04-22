@@ -2,13 +2,14 @@ import { Schema, model, Types, Document } from 'mongoose';
 
 export interface IJobBasicInfo {
   title: string;
-  description: string;
-  roleType: string;
+  summary: string;
+  jobDescription: string;
+  roleType: 'Frontend' | 'Backend' | 'Fullstack' | 'Mobile' | 'DevOps' | 'QA' | 'Khác';
   headcount: number;
   locations: string[];
-  workModel: string;
-  level: string;
-  jobType: string;
+  workModel:  'On-site' | 'Remote' | 'Hybrid';
+  level: 'Intern' | 'Fresher';
+  jobType: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
 }
 
 export interface IJobRequirements {
@@ -34,7 +35,8 @@ export interface IJob extends Document {
 const JobBasicInfoSchema = new Schema<IJobBasicInfo>(
   {
     title: { type: String, required: true },
-    description: { type: String, required: true },
+    summary: { type: String, required: true },
+    jobDescription: { type: String, required: true },
     roleType: { type: String, required: true },
     headcount: { type: Number, required: true },
     locations: [{ type: String, required: true }],

@@ -1,5 +1,7 @@
 import { Job, IJob } from "../models/Job";
 import { JobBasicDto } from "../dto/get-job.dto";
+import { CompanyMember } from "../models/CompanyMember";
+import { CreateJobDto } from "../dto/create-job.dto";
 
 interface JobsQuery {
   page?: string;
@@ -54,7 +56,8 @@ export const listJobs = async (
     },
     basicInfo: {
       title: job.basicInfo?.title || "",
-      description: job.basicInfo?.description || "",
+      summary: job.basicInfo?.summary || "",
+      jobDescription: job.basicInfo?.jobDescription || "",
       roleType: job.basicInfo?.roleType || "",
     },
     location: (job.basicInfo?.locations && job.basicInfo.locations.length > 0) ? job.basicInfo.locations[0] : "Chưa cập nhật",
@@ -96,4 +99,36 @@ export const getJobById = async (id: string): Promise<IJob> => {
   }
 
   return job as unknown as IJob;
+};
+
+export const createJobService = async (
+  userId: string,
+  data: CreateJobDto
+): Promise<IJob> => {
+  const companyMember = await CompanyMember.findOne({ userId }).lean();
+
+  // check account is member of company
+  if (!companyMember) {
+    throw new JobsServiceError("Tài khoản không là thành viên của công ty nào, không thể tạo job.", 403);
+  }
+
+  // check role and permission
+  const isRecruiter = companyMember.membershipRole === 'recruiter'; // role 'recruiter'
+  const hasCreatePermission = companyMember.permission?.canCreateJob;
+
+  if (!isRecruiter || !hasCreatePermission) {
+    throw new JobsServiceError("Vai trò hoặc quyền của bạn không thể tạo job", 403);
+  }
+
+  const newJob = new Job({
+    companyId: companyMember.companyId,
+    createdBy: userId,
+    basicInfo: data.basicInfo,
+    requirements: data.requirements,
+    status: 'published',
+  });
+
+  await newJob.save();
+
+  return newJob;
 };

@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
-import { listJobs, getJobById, JobsServiceError } from "../services/jobs.service";
+import { AuthenticatedRequest } from "../middlewares/auth.middleware";
+import { listJobs, getJobById, JobsServiceError, createJobService } from "../services/jobs.service";
+import { CreateJobDto } from "../dto/create-job.dto";
 
 export const getListJobs = async (
   req: Request,
@@ -43,6 +45,34 @@ export const getJobDetail = async (
     }
 
     console.error("Get job detail error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const createJobController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const jobData: CreateJobDto = req.body;
+    const newJob = await createJobService(userId, jobData);
+
+    return res.status(201).json({
+      message: "Create new job successfully",
+      data: newJob,
+    });
+  }
+  catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Create job error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

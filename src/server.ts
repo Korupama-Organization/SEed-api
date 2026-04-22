@@ -9,6 +9,7 @@ import jobRoutes from "./routes/job.routes";
 import { validateRequiredEnv } from "./utils/env-validation";
 import swaggerSpec from "./utils/swagger";
 import swaggerUi from "swagger-ui-express";
+import { generateAccessToken } from "./utils/jwt";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -50,6 +51,7 @@ const start = async () => {
   await connectDB();
   app.listen(PORT, () => {
     console.log(`Server is up and running at http://localhost:${PORT}`);
+    console.log(generateAccessToken('60d5ecb8b392d700153ee001', 'recruiter'));
   });
 };
 

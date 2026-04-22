@@ -8,7 +8,8 @@ export interface JobBasicDto {
   };
   basicInfo: {
     title: string;
-    description: string;
+    summary: string;
+    jobDescription: string;
     roleType: string;
   };
   location: string;

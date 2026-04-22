@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { getListJobs, getJobDetail } from '../controllers/jobs.controller';
+import { getListJobs, getJobDetail, createJobController } from '../controllers/jobs.controller';
 import { requireAuth } from "../middlewares/auth.middleware";
+import { requireRole } from "../middlewares/domain-authorization.middleware";
 
 const router = Router();
 
@@ -210,8 +211,80 @@ router.get("/", requireAuth, getListJobs);
  */
 router.get("/:id", requireAuth, getJobDetail);
 
-// Các endpoint thao tác với job (chưa code detail, chỉ giữ khung)
-router.post("/", requireAuth); 
+/**
+ * @swagger
+ * /api/jobs:
+ *   post:
+ *     summary: Create a new job
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               basicInfo:
+ *                 type: object
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                   summary:
+ *                     type: string
+ *                   jobDescription:
+ *                     type: string
+ *                   roleType:
+ *                     type: string
+ *                   headcount:
+ *                     type: number
+ *                   locations:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   workModel:
+ *                     type: string
+ *                   level:
+ *                     type: string
+ *                   jobType:
+ *                     type: string
+ *               requirements:
+ *                 type: object
+ *                 properties:
+ *                   requiredSkills:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   preferredSkills:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   requiredEducation:
+ *                     type: string
+ *                   minGpa:
+ *                     type: number
+ *                   requiredLanguages:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   minMonthsExperience:
+ *                     type: number
+ *                   portfolioExpected:
+ *                     type: string
+ *     responses:
+ *       201:
+ *         description: Create job successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden - Only recruiter with permission can create job
+ *       500:
+ *         description: Server error
+ */
+router.post("/", requireAuth, requireRole("recruiter"), createJobController); 
+
+
 router.patch("/:id", requireAuth);
 router.delete("/:id", requireAuth);
 router.patch("/:id/publish", requireAuth);
