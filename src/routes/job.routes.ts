@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getListJobs, getJobDetail, createJobController } from '../controllers/jobs.controller';
+import { getListJobs, getJobDetail, createJobController, updateJobController } from '../controllers/jobs.controller';
 import { requireAuth } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/domain-authorization.middleware";
 
@@ -284,8 +284,8 @@ router.get("/:id", requireAuth, getJobDetail);
  */
 router.post("/", requireAuth, requireRole("recruiter"), createJobController); 
 
+router.patch("/:id", requireAuth, requireRole("recruiter"), updateJobController);
 
-router.patch("/:id", requireAuth);
 router.delete("/:id", requireAuth);
 router.patch("/:id/publish", requireAuth);
 router.patch("/:id/close", requireAuth);

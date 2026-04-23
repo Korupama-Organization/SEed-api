@@ -2,6 +2,8 @@ import { Job, IJob } from "../models/Job";
 import { JobBasicDto } from "../dto/get-job.dto";
 import { CompanyMember } from "../models/CompanyMember";
 import { CreateJobDto } from "../dto/create-job.dto";
+import { UpdateJobDto } from "../dto/update-job.dto";
+import { Types } from "mongoose";
 
 interface JobsQuery {
   page?: string;
@@ -131,4 +133,51 @@ export const createJobService = async (
   await newJob.save();
 
   return newJob;
+};
+
+export const updateJobService = async (
+  userId: string,
+  jobId: string,
+  jobData: UpdateJobDto
+): Promise<IJob> => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
+  const existingJob = await Job.findById(jobId).lean();
+  if (!existingJob) {
+    throw new JobsServiceError("Job không tồn tại", 404);
+  }
+
+  if (existingJob.createdBy.toString() !== userId) {
+    throw new JobsServiceError("Bạn không có quyền cập nhật job này", 403);
+  }
+
+  const updateData: any = {};
+  if (jobData.basicInfo) {
+    updateData.basicInfo = { ...existingJob.basicInfo, ...jobData.basicInfo };
+  }
+  if (jobData.requirements) {
+    updateData.requirements = { ...existingJob.requirements, ...jobData.requirements };
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    throw new JobsServiceError("Không có dữ liệu để cập nhật", 400);
+  }
+
+  const updatedJob = await Job.findByIdAndUpdate(
+    jobId,
+    { $set: updateData },
+    { 
+      new: true, 
+      runValidators: true, 
+      context: "query" 
+    }
+  );
+
+  if (!updatedJob) {
+    throw new JobsServiceError("Cập nhật job thất bại", 400);
+  }
+
+  return updatedJob;
 };
