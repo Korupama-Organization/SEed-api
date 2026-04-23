@@ -181,3 +181,26 @@ export const updateJobService = async (
 
   return updatedJob;
 };
+
+export const deleteJobService = async (
+  userId: string,
+  jobId: string
+): Promise<void> => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
+  const existingJob = await Job.findById(jobId).lean();
+  if (!existingJob) {
+    throw new JobsServiceError("Job không tồn tại", 404);
+  }
+
+  if (existingJob.createdBy.toString() !== userId) {
+    throw new JobsServiceError("Bạn không có quyền xóa job này", 403);
+  }
+
+  const deletedJob = await Job.findByIdAndDelete(jobId);
+  if (!deletedJob) {
+    throw new JobsServiceError("Xóa job thất bại", 400);
+  }
+};
