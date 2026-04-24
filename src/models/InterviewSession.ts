@@ -106,7 +106,7 @@ const InterviewSessionSchema = new Schema<IInterviewSession>(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
   },
-  { timestamps: true },
+  { timestamps: true, collection: "interview_sessions" },
 );
 
 export const InterviewSession = model<IInterviewSession>(
