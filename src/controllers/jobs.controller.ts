@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware";
-import { listJobs, getJobById, JobsServiceError, createJobService, updateJobService, deleteJobService } from "../services/jobs.service";
+import { 
+  listJobs, 
+  getJobById, 
+  JobsServiceError, 
+  createJobService, 
+  updateJobService, 
+  deleteJobService, 
+  publishJobService,
+  closeJobService 
+} from "../services/jobs.service";
+
 import { CreateJobDto} from "../dto/create-job.dto";
 import { UpdateJobDto } from "../dto/update-job.dto";
 
@@ -131,3 +141,57 @@ export const deleteJobController = async (
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+export const publishJobController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const jobId = req.params.id as string;
+    await publishJobService(userId, jobId);
+
+    return res.status(200).json({
+      message: "Publish job thành công",
+    });
+
+  } catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Publish job error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+export const closeJobController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const jobId = req.params.id as string;
+    await closeJobService(userId, jobId);
+
+    return res.status(200).json({
+      message: "Close job thành công",
+    });
+
+  } catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Close job error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}

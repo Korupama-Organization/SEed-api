@@ -1,5 +1,14 @@
 import { Router } from "express";
-import { getListJobs, getJobDetail, createJobController, updateJobController, deleteJobController } from '../controllers/jobs.controller';
+import { 
+  getListJobs, 
+  getJobDetail, 
+  createJobController, 
+  updateJobController, 
+  deleteJobController,
+  publishJobController,
+  closeJobController 
+} from '../controllers/jobs.controller';
+
 import { requireAuth } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/domain-authorization.middleware";
 
@@ -115,7 +124,7 @@ const router = Router();
  *       500:
  *         description: Server error
  */
-router.get("/", requireAuth, getListJobs);
+router.get("/", getListJobs);
 
 /**
  * @swagger
@@ -288,7 +297,8 @@ router.patch("/:id", requireAuth, requireRole("recruiter"), updateJobController)
 
 router.delete("/:id", requireAuth, requireRole("recruiter"), deleteJobController);
 
-router.patch("/:id/publish", requireAuth);
-router.patch("/:id/close", requireAuth);
+router.patch("/:id/publish", requireAuth, requireRole("recruiter"), publishJobController);
+
+router.patch("/:id/close", requireAuth, requireRole("recruiter"), closeJobController);
 
 export default router;

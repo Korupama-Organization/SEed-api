@@ -10,6 +10,7 @@ interface JobsQuery {
   limit?: string;
 }
 
+type JobStatus = "draft" | "published" | "closed" | "archived" | "open";
 
 interface ListJobsResult {
   jobs: JobBasicDto[];
@@ -30,22 +31,54 @@ export class JobsServiceError extends Error {
   }
 }
 
+const parsePositiveInteger = (value: string | undefined, defaultValue: number, fieldName: string): number => {
+  const parsed = parseInt(value || `${defaultValue}`, 10);
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    throw new JobsServiceError(`${fieldName} phải là số nguyên dương`, 400);
+  }
+
+  return parsed;
+};
+
+const assertJobAccess = async (
+  userId: string,
+  job: IJob,
+  options: { actionLabel: string; requirePermission?: "canUpdateJob" | "canDeleteJob" }
+): Promise<void> => {
+  if (job.createdBy.toString() !== userId) {
+    throw new JobsServiceError(`Bạn không có quyền ${options.actionLabel} job này`, 403);
+  }
+
+  const companyMember = await CompanyMember.findOne({
+    userId,
+    companyId: job.companyId,
+  }).lean();
+
+  if (!companyMember) {
+    throw new JobsServiceError("Bạn không thuộc công ty của job này", 403);
+  }
+
+  if (options.requirePermission && !companyMember.permission?.[options.requirePermission]) {
+    throw new JobsServiceError(`Bạn không có quyền ${options.actionLabel} job`, 403);
+  }
+};
+
 export const listJobs = async (
   query: JobsQuery,
 ): Promise<ListJobsResult> => {
-  const pageNum = parseInt(query.page || "1", 10);
-  const limitNum = parseInt(query.limit || "10", 10);
+  const pageNum = parsePositiveInteger(query.page, 1, "page");
+  const limitNum = parsePositiveInteger(query.limit, 10, "limit");
   const skip = (pageNum - 1) * limitNum;
 
   const [jobs, total] = await Promise.all([
-    Job.find()
+    Job.find({ status: 'published' })
       .select("companyId basicInfo status createdAt updatedAt")
       .populate("companyId", "name logoUrl")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
       .lean(),
-    Job.countDocuments(),
+    Job.countDocuments({ status: 'published' }),
   ]);
 
   const jobBasic: JobBasicDto[] = jobs.map((job: any) => ({
@@ -83,6 +116,10 @@ export const listJobs = async (
 };
 
 export const getJobById = async (id: string): Promise<IJob> => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
   const job = await Job.findById(id)
     .populate("companyId", "name logoUrl websiteUrl description location email phone workingEnvironment socialMediaLinks")
     .populate("createdBy", "fullName avatarUrl")
@@ -127,7 +164,7 @@ export const createJobService = async (
     createdBy: userId,
     basicInfo: data.basicInfo,
     requirements: data.requirements,
-    status: 'published',
+    status: "draft",
   });
 
   await newJob.save();
@@ -149,8 +186,13 @@ export const updateJobService = async (
     throw new JobsServiceError("Job không tồn tại", 404);
   }
 
-  if (existingJob.createdBy.toString() !== userId) {
-    throw new JobsServiceError("Bạn không có quyền cập nhật job này", 403);
+  await assertJobAccess(userId, existingJob as unknown as IJob, {
+    actionLabel: "update",
+    requirePermission: "canUpdateJob",
+  });
+
+  if ("status" in (jobData as Record<string, unknown>)) {
+    throw new JobsServiceError("Không thể cập nhật status ở đây", 400);
   }
 
   const updateData: any = {};
@@ -195,12 +237,99 @@ export const deleteJobService = async (
     throw new JobsServiceError("Job không tồn tại", 404);
   }
 
-  if (existingJob.createdBy.toString() !== userId) {
-    throw new JobsServiceError("Bạn không có quyền xóa job này", 403);
+  await assertJobAccess(userId, existingJob as unknown as IJob, {
+    actionLabel: "soft delete",
+    requirePermission: "canDeleteJob",
+  });
+
+  if (existingJob.status === "archived") {
+    throw new JobsServiceError("Job đã ở trạng thái archived", 400);
   }
 
-  const deletedJob = await Job.findByIdAndDelete(jobId);
-  if (!deletedJob) {
+  if (existingJob.status !== "closed") {
+    throw new JobsServiceError("Chỉ có thể archived job đang closed", 400);
+  }
+
+  const softDeletedJob = await Job.findByIdAndUpdate(
+    jobId,
+    { $set: { status: 'archived' } },
+    { new: true }
+  );
+
+  if (!softDeletedJob) {
     throw new JobsServiceError("Xóa job thất bại", 400);
   }
 };
+
+export const publishJobService = async (
+  userId: string,
+  jobId: string
+): Promise<void> => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
+  const existingJob = await Job.findById(jobId).lean();
+  if (!existingJob) {
+    throw new JobsServiceError("Job không tồn tại", 404);
+  }
+
+  await assertJobAccess(userId, existingJob as unknown as IJob, {
+    actionLabel: "publish",
+    requirePermission: "canUpdateJob",
+  });
+
+  const publishAllowedStatuses: JobStatus[] = ["draft", "closed", "archived"];
+  if (existingJob.status === "published") {
+    throw new JobsServiceError("Job đã được published", 400);
+  }
+  if (!publishAllowedStatuses.includes(existingJob.status as JobStatus)) {
+    throw new JobsServiceError("Không thể publish từ trạng thái hiện tại", 400);
+  }
+
+  const updatedJob = await Job.findByIdAndUpdate(
+    jobId,
+    { $set: { status: 'published' } },
+    { new: true }
+  );
+
+  if (!updatedJob) {
+    throw new JobsServiceError("Publish job thất bại", 400);
+  }
+}
+
+export const closeJobService = async (
+  userId: string,
+  jobId: string
+): Promise<void> => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
+  const existingJob = await Job.findById(jobId).lean();
+  if (!existingJob) {
+    throw new JobsServiceError("Job không tồn tại", 404);
+  }
+
+  await assertJobAccess(userId, existingJob as unknown as IJob, {
+    actionLabel: "close",
+    requirePermission: "canUpdateJob",
+  });
+
+  if (existingJob.status === "closed") {
+    throw new JobsServiceError("Job đã được closed", 400);
+  }
+  if (existingJob.status !== "published") {
+    throw new JobsServiceError("Chỉ có thể close job đang published", 400);
+  }
+
+  const updatedJob = await Job.findByIdAndUpdate(
+    jobId,
+    { $set: { status: 'closed' } },
+    { new: true }
+  );
+
+  if (!updatedJob) {
+    throw new JobsServiceError("Close job thất bại", 400);
+  }
+}
