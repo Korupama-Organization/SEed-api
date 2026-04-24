@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import "dotenv/config";
 import cors from "cors";
 import express, { Request, Response } from "express";
@@ -5,6 +6,7 @@ import connectDB from "./db/connect";
 import authRoutes from "./routes/auth.routes";
 import candidateProfileRoutes from "./routes/candidate-profile.routes";
 import companiesRoutes from "./routes/companies.routes";
+import interviewSessionsRoutes from "./routes/interview-sessions.routes";
 import { validateRequiredEnv } from "./utils/env-validation";
 import swaggerSpec from "./utils/swagger";
 import swaggerUi from "swagger-ui-express";
@@ -42,6 +44,7 @@ app.get("/", (_req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/candidate-profiles", candidateProfileRoutes);
 app.use("/api/companies", companiesRoutes);
+app.use("/api/interview-sessions", interviewSessionsRoutes);
 
 const start = async () => {
   validateRequiredEnv();
