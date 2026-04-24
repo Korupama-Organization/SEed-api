@@ -152,6 +152,30 @@ router.post("/", requireAuth, createInterviewSessionHandler);
  *                 type: array
  *                 items:
  *                   type: object
+ *                   properties:
+ *                     question:
+ *                       type: string
+ *                     answer:
+ *                       type: string
+ *                     audioUrl:
+ *                       type: string
+ *                     evaluation:
+ *                       type: object
+ *                       properties:
+ *                         score:
+ *                           type: number
+ *                         strengths:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         weaknesses:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         feedback:
+ *                           type: string
+ *                         intentCategory:
+ *                           type: string
  *               finalReport:
  *                 type: object
  *               startTime:
