@@ -110,13 +110,6 @@ const PROFILE_COMPLETION_RULES: CompletionRule[] = [
       Array.isArray(profile?.projects) && profile.projects.length > 0,
   },
   {
-    field: "workExperiences",
-    warning: "Chưa có workExperiences.",
-    isComplete: (profile) =>
-      Array.isArray(profile?.workExperiences) &&
-      profile.workExperiences.length > 0,
-  },
-  {
     field: "languages",
     warning: "Chưa có languages/chứng chỉ ngoại ngữ.",
     isComplete: (profile) =>
