@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { updateMyCandidateProfile } from "../controllers/candidate-profile.controller";
+import {
+  getMyCandidateProfileCompletion,
+  updateMyCandidateProfile,
+} from "../controllers/candidate-profile.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/domain-authorization.middleware";
 
@@ -104,6 +107,74 @@ router.patch(
   requireAuth,
   requireRole("candidate"),
   updateMyCandidateProfile,
+);
+
+/**
+ * @swagger
+ * /api/candidate-profiles/me/completion:
+ *   get:
+ *     summary: Evaluate candidate profile completion
+ *     description: Trả về tỷ lệ hoàn thành profile và danh sách cảnh báo các trường còn thiếu.
+ *     tags: [CandidateProfile]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Candidate profile completion evaluated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     hasProfile:
+ *                       type: boolean
+ *                     totalCriteria:
+ *                       type: integer
+ *                     completedCriteria:
+ *                       type: integer
+ *                     completionPercentage:
+ *                       type: integer
+ *                     status:
+ *                       type: string
+ *                       enum: [empty, incomplete, almost_complete, complete]
+ *                     completedFields:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     missingFields:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     warnings:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           field:
+ *                             type: string
+ *                           message:
+ *                             type: string
+ *                     nextRecommendedFields:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/me/completion",
+  requireAuth,
+  requireRole("candidate"),
+  getMyCandidateProfileCompletion,
 );
 
 export default router;
