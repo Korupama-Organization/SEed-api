@@ -27,6 +27,155 @@ const isObject = (value: unknown): value is Record<string, unknown> => {
 
 const ALLOWED_TOP_LEVEL_FIELDS = [...PROFILE_UPDATABLE_FIELDS] as const;
 
+type CompletionWarning = {
+  field: string;
+  message: string;
+};
+
+type CompletionRule = {
+  field: string;
+  warning: string;
+  isComplete: (profile: any) => boolean;
+};
+
+const hasNonEmptyString = (value: unknown): boolean => {
+  return typeof value === "string" && value.trim().length > 0;
+};
+
+const PROFILE_COMPLETION_RULES: CompletionRule[] = [
+  {
+    field: "academicInfo.university",
+    warning: "Thiếu trường đại học trong academicInfo.",
+    isComplete: (profile) =>
+      hasNonEmptyString(profile?.academicInfo?.university),
+  },
+  {
+    field: "academicInfo.major",
+    warning: "Thiếu chuyên ngành trong academicInfo.",
+    isComplete: (profile) => hasNonEmptyString(profile?.academicInfo?.major),
+  },
+  {
+    field: "academicInfo.graduationYear",
+    warning: "Thiếu năm tốt nghiệp trong academicInfo.",
+    isComplete: (profile) =>
+      typeof profile?.academicInfo?.graduationYear === "number",
+  },
+  {
+    field: "introductionQuestions.preferredRoles",
+    warning: "Chưa khai báo preferredRoles trong introductionQuestions.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.introductionQuestions?.preferredRoles) &&
+      profile.introductionQuestions.preferredRoles.length > 0,
+  },
+  {
+    field: "introductionQuestions.whyTheseRoles",
+    warning: "Thiếu whyTheseRoles trong introductionQuestions.",
+    isComplete: (profile) =>
+      hasNonEmptyString(profile?.introductionQuestions?.whyTheseRoles),
+  },
+  {
+    field: "introductionQuestions.futureGoals",
+    warning: "Thiếu futureGoals trong introductionQuestions.",
+    isComplete: (profile) =>
+      hasNonEmptyString(profile?.introductionQuestions?.futureGoals),
+  },
+  {
+    field: "introductionQuestions.favoriteTechnology",
+    warning: "Thiếu favoriteTechnology trong introductionQuestions.",
+    isComplete: (profile) =>
+      hasNonEmptyString(profile?.introductionQuestions?.favoriteTechnology),
+  },
+  {
+    field: "advantagePoint",
+    warning: "Chưa có advantagePoint (điểm mạnh nổi bật).",
+    isComplete: (profile) => hasNonEmptyString(profile?.advantagePoint),
+  },
+  {
+    field: "technicalSkills",
+    warning: "Chưa có technicalSkills.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.technicalSkills) &&
+      profile.technicalSkills.length > 0,
+  },
+  {
+    field: "softSkills",
+    warning: "Chưa có softSkills.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.softSkills) && profile.softSkills.length > 0,
+  },
+  {
+    field: "projects",
+    warning: "Chưa có projects.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.projects) && profile.projects.length > 0,
+  },
+  {
+    field: "workExperiences",
+    warning: "Chưa có workExperiences.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.workExperiences) &&
+      profile.workExperiences.length > 0,
+  },
+  {
+    field: "languages",
+    warning: "Chưa có languages/chứng chỉ ngoại ngữ.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.languages) && profile.languages.length > 0,
+  },
+  {
+    field: "achievements",
+    warning: "Chưa có achievements/thành tích.",
+    isComplete: (profile) =>
+      Array.isArray(profile?.achievements) && profile.achievements.length > 0,
+  },
+];
+
+const evaluateProfileCompletion = (profile: any | null) => {
+  const completedFields: string[] = [];
+  const missingFields: string[] = [];
+  const warnings: CompletionWarning[] = [];
+
+  for (const rule of PROFILE_COMPLETION_RULES) {
+    if (profile && rule.isComplete(profile)) {
+      completedFields.push(rule.field);
+      continue;
+    }
+
+    missingFields.push(rule.field);
+    warnings.push({
+      field: rule.field,
+      message: rule.warning,
+    });
+  }
+
+  const totalCriteria = PROFILE_COMPLETION_RULES.length;
+  const completedCriteria = completedFields.length;
+  const completionPercentage = Math.round(
+    (completedCriteria / totalCriteria) * 100,
+  );
+
+  let status: "empty" | "incomplete" | "almost_complete" | "complete" =
+    "incomplete";
+  if (!profile) {
+    status = "empty";
+  } else if (completionPercentage === 100) {
+    status = "complete";
+  } else if (completionPercentage >= 70) {
+    status = "almost_complete";
+  }
+
+  return {
+    totalCriteria,
+    completedCriteria,
+    completionPercentage,
+    status,
+    completedFields,
+    missingFields,
+    warnings,
+    nextRecommendedFields: missingFields.slice(0, 3),
+  };
+};
+
 const TECHNICAL_SKILL_CATEGORIES = [
   "Ngôn ngữ lập trình",
   "Framework",
@@ -690,6 +839,37 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
     }
 
     console.error("Update candidate profile error:", error);
+    return res.status(500).json({ error: "Lỗi máy chủ." });
+  }
+};
+
+export const getMyCandidateProfileCompletion = async (
+  req: Request,
+  res: Response,
+) => {
+  const authReq = req as AuthenticatedRequest;
+
+  if (!authReq.auth?.userId) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  try {
+    const userObjectId = new Types.ObjectId(authReq.auth.userId);
+    const profile = await CandidateProfile.findOne({
+      userId: userObjectId,
+    }).lean();
+
+    const completionData = evaluateProfileCompletion(profile);
+
+    return res.status(200).json({
+      message: "Đánh giá độ hoàn thành CandidateProfile thành công.",
+      data: {
+        hasProfile: Boolean(profile),
+        ...completionData,
+      },
+    });
+  } catch (error: any) {
+    console.error("Get candidate profile completion error:", error);
     return res.status(500).json({ error: "Lỗi máy chủ." });
   }
 };
