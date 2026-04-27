@@ -140,6 +140,15 @@ const loginNormalAuthUser = async (identifier: string, password: string) => {
   return { user };
 };
 
+const findUserByNormalizedEmail = async (normalizedEmail: string) => {
+  return User.findOne({
+    $or: [
+      { "normalAuth.email": normalizedEmail },
+      { "contactInfo.email": normalizedEmail },
+    ],
+  });
+};
+
 export const registerHrUser = async (req: Request, res: Response) => {
   try {
     const {
@@ -182,12 +191,7 @@ export const registerHrUser = async (req: Request, res: Response) => {
         .json({ message: "Password must be at least 6 characters" });
     }
 
-    const existingUser = await User.findOne({
-      $or: [
-        { "normalAuth.email": normalizedEmail },
-        { "contactInfo.email": normalizedEmail },
-      ],
-    });
+    const existingUser = await findUserByNormalizedEmail(normalizedEmail);
 
     if (existingUser) {
       return res.status(409).json({ message: "Email is already registered" });
@@ -223,6 +227,32 @@ export const registerHrUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("HR registration error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const checkHrEmailAvailability = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.query as { email?: string };
+    const normalizedEmail = email ? normalizeEmail(email) : "";
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    if (!normalizedEmail.includes("@")) {
+      return res.status(400).json({ message: "Email is invalid" });
+    }
+
+    const existingUser = await findUserByNormalizedEmail(normalizedEmail);
+
+    if (existingUser) {
+      return res.status(409).json({ message: "Email is already registered" });
+    }
+
+    return res.status(200).json({ message: "Email is available" });
+  } catch (error) {
+    console.error("Check HR email availability error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
