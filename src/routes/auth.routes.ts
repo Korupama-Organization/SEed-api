@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+    checkHrEmailAvailability,
     getCurrentUser,
     loginUser,
     logoutUser,
@@ -47,6 +48,7 @@ const router = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/register/hr', authRateLimiter, registerHrUser);
+router.get('/register/hr/check-email', authRateLimiter, checkHrEmailAvailability);
 
 /**
  * @swagger
