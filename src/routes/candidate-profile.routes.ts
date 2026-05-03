@@ -3,6 +3,7 @@ import {
   getMyCandidateProfileCompletion,
   updateMyCandidateProfile,
 } from "../controllers/candidate-profile.controller";
+import { getMyCandidateDashboard } from "../controllers/candidate-dashboard.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/domain-authorization.middleware";
 
@@ -107,6 +108,32 @@ router.patch(
   requireAuth,
   requireRole("candidate"),
   updateMyCandidateProfile,
+);
+
+/**
+ * @swagger
+ * /api/candidate-profiles/me/dashboard:
+ *   get:
+ *     summary: Get candidate dashboard data
+ *     description: Trả về dữ liệu dashboard cho candidate, gồm profile completion, job matches và thống kê cơ bản. Không bao gồm phần interview.
+ *     tags: [CandidateProfile]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Candidate dashboard loaded successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/me/dashboard",
+  requireAuth,
+  requireRole("candidate"),
+  getMyCandidateDashboard,
 );
 
 /**
