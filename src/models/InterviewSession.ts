@@ -39,6 +39,7 @@ export interface IInterviewSession extends Document {
   sessionType: SessionType;
   interviewMode: InterviewMode;
   status: InterviewStatus;
+  cancelReason?: string;
   conversations: IConversation[];
   finalReport?: IFinalReport;
   startTime: Date;
@@ -101,6 +102,7 @@ const InterviewSessionSchema = new Schema<IInterviewSession>(
       ],
       required: true,
     },
+    cancelReason: { type: String },
     conversations: { type: [ConversationSchema], default: [] },
     finalReport: { type: FinalReportSchema },
     startTime: { type: Date, required: true },

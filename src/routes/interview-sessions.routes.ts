@@ -1,6 +1,10 @@
 import { Router } from "express";
 import {
+  cancelInterviewSessionHandler,
+  completeInterviewSessionHandler,
   createInterviewSessionHandler,
+  getInterviewSessionDetailHandler,
+  startInterviewSessionHandler,
   updateInterviewSessionHandler,
 } from "../controllers/interview-sessions.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
@@ -116,6 +120,33 @@ router.post("/", requireAuth, createInterviewSessionHandler);
 /**
  * @swagger
  * /api/interview-sessions/{id}:
+ *   get:
+ *     summary: Get interview session detail by id
+ *     tags: [InterviewSessions]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 6800c1a16541f34f61f7b999
+ *     responses:
+ *       200:
+ *         description: Interview session retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Interview session not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/:id", requireAuth, getInterviewSessionDetailHandler);
+
+/**
+ * @swagger
+ * /api/interview-sessions/{id}:
  *   patch:
  *     summary: Update an interview session by id
  *     tags: [InterviewSessions]
@@ -197,5 +228,104 @@ router.post("/", requireAuth, createInterviewSessionHandler);
  *         description: Server error
  */
 router.patch("/:id", requireAuth, updateInterviewSessionHandler);
+
+/**
+ * @swagger
+ * /api/interview-sessions/{id}/start:
+ *   post:
+ *     summary: Start an interview session
+ *     tags: [InterviewSessions]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 6800c1a16541f34f61f7b999
+ *     responses:
+ *       200:
+ *         description: Interview session started successfully
+ *       400:
+ *         description: Invalid session status
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Interview session not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:id/start", requireAuth, startInterviewSessionHandler);
+
+/**
+ * @swagger
+ * /api/interview-sessions/{id}/complete:
+ *   post:
+ *     summary: Complete an interview session
+ *     tags: [InterviewSessions]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 6800c1a16541f34f61f7b999
+ *     responses:
+ *       200:
+ *         description: Interview session completed successfully
+ *       400:
+ *         description: Invalid session status
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Interview session not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:id/complete", requireAuth, completeInterviewSessionHandler);
+
+/**
+ * @swagger
+ * /api/interview-sessions/{id}/cancel:
+ *   post:
+ *     summary: Cancel an interview session
+ *     tags: [InterviewSessions]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 6800c1a16541f34f61f7b999
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cancelReason
+ *             properties:
+ *               cancelReason:
+ *                 type: string
+ *                 example: Candidate requested to reschedule
+ *     responses:
+ *       200:
+ *         description: Interview session cancelled successfully
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Interview session not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:id/cancel", requireAuth, cancelInterviewSessionHandler);
 
 export default router;
