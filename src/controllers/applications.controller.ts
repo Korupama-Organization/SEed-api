@@ -8,6 +8,10 @@ import {
   validateInterviewApplicationDto,
 } from "../dto/interview-application.dto";
 import {
+  SecondInterviewApplicationDto,
+  validateSecondInterviewApplicationDto,
+} from "../dto/second-interview-application.dto";
+import {
   OfferApplicationDto,
   validateOfferApplicationDto,
 } from "../dto/offer-application.dto";
@@ -15,10 +19,6 @@ import {
   HireApplicationDto,
   validateHireApplicationDto,
 } from "../dto/hire-application.dto";
-import {
-  RejectApplicationDto,
-  validateRejectApplicationDto,
-} from "../dto/reject-application.dto";
 import {
   ShortlistApplicationDto,
   validateShortlistApplicationDto,
@@ -29,8 +29,8 @@ import {
   ApplicationServiceError,
   hireApplication,
   interviewApplication,
+  secondInterviewApplication,
   offerApplication,
-  rejectApplication,
   shortlistApplication,
 } from "../services/applications.service";
 
@@ -141,7 +141,7 @@ export const interviewApplicationHandler = async (
     );
 
     return res.status(200).json({
-      message: "Application moved to interview successfully",
+      message: "Application moved to first interview successfully",
       application,
     });
   } catch (error: any) {
@@ -150,6 +150,47 @@ export const interviewApplicationHandler = async (
     }
 
     console.error("Interview application error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const secondInterviewApplicationHandler = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const id = resolveApplicationId(req);
+    if (!id) {
+      return res.status(400).json({ message: "Application id is required" });
+    }
+
+    const { value, error } = await validateSecondInterviewApplicationDto(
+      req.body,
+    );
+    if (error || !value) {
+      return res.status(400).json({ message: error || "Invalid payload" });
+    }
+
+    const application = await secondInterviewApplication(
+      id,
+      value as SecondInterviewApplicationDto,
+    );
+
+    return res.status(200).json({
+      message: "Application moved to second interview successfully",
+      application,
+    });
+  } catch (error: any) {
+    if (error instanceof ApplicationServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Second interview application error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -230,46 +271,6 @@ export const hireApplicationHandler = async (
     }
 
     console.error("Hire application error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const rejectApplicationHandler = async (
-  req: AuthenticatedRequest,
-  res: Response,
-) => {
-  try {
-    const userId = req.auth?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const id = resolveApplicationId(req);
-    if (!id) {
-      return res.status(400).json({ message: "Application id is required" });
-    }
-
-    const { value, error } = await validateRejectApplicationDto(req.body);
-    if (error || !value) {
-      return res.status(400).json({ message: error || "Invalid payload" });
-    }
-
-    const application = await rejectApplication(
-      id,
-      value as RejectApplicationDto,
-      userId,
-    );
-
-    return res.status(200).json({
-      message: "Application rejected successfully",
-      application,
-    });
-  } catch (error: any) {
-    if (error instanceof ApplicationServiceError) {
-      return res.status(error.statusCode).json({ message: error.message });
-    }
-
-    console.error("Reject application error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

@@ -3,9 +3,9 @@ import { Application, IApplication } from "../models/Application";
 import { CreateApplicationDto } from "../dto/create-application.dto";
 import { ShortlistApplicationDto } from "../dto/shortlist-application.dto";
 import { InterviewApplicationDto } from "../dto/interview-application.dto";
+import { SecondInterviewApplicationDto } from "../dto/second-interview-application.dto";
 import { OfferApplicationDto } from "../dto/offer-application.dto";
 import { HireApplicationDto } from "../dto/hire-application.dto";
-import { RejectApplicationDto } from "../dto/reject-application.dto";
 
 export class ApplicationServiceError extends Error {
   statusCode: number;
@@ -26,8 +26,8 @@ type ApplicationStatus =
 
 const STATUS_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   applied: ["screening_passed"],
-  screening_passed: ["ai_interview_completed", "manual_interview_completed"],
-  ai_interview_completed: ["offered"],
+  screening_passed: ["ai_interview_completed"],
+  ai_interview_completed: ["manual_interview_completed"],
   manual_interview_completed: ["offered"],
   offered: ["hired"],
   hired: [],
@@ -221,6 +221,24 @@ export const interviewApplication = async (
   assertNotRejected(application);
 
   const currentStatus = getLatestStatus(application);
+  assertTransitionAllowed(currentStatus, "ai_interview_completed");
+
+  application.applicationStatus.push(
+    buildStatusEntry("ai_interview_completed", dto.note),
+  );
+
+  return application.save();
+};
+
+export const secondInterviewApplication = async (
+  id: string,
+  dto: SecondInterviewApplicationDto,
+): Promise<IApplication> => {
+  const application = await getApplicationById(id);
+
+  assertNotRejected(application);
+
+  const currentStatus = getLatestStatus(application);
   assertTransitionAllowed(currentStatus, "manual_interview_completed");
 
   application.applicationStatus.push(
@@ -284,39 +302,6 @@ export const hireApplication = async (
       decidedBy: toObjectId(decidedBy, "DecidedBy"),
     };
   }
-
-  return application.save();
-};
-
-export const rejectApplication = async (
-  id: string,
-  dto: RejectApplicationDto,
-  decidedBy: string,
-): Promise<IApplication> => {
-  if (!decidedBy) {
-    throw new ApplicationServiceError("DecidedBy is required", 400);
-  }
-
-  assertValidObjectId(decidedBy, "DecidedBy");
-
-  const application = await getApplicationById(id);
-
-  if (application.finalDecision?.decision === "reject") {
-    throw new ApplicationServiceError("Application has been rejected", 400);
-  }
-
-  if (dto.note) {
-    const currentStatus = getLatestStatus(application);
-    application.applicationStatus.push(
-      buildStatusEntry(currentStatus, dto.note),
-    );
-  }
-
-  application.finalDecision = {
-    decision: "reject",
-    decidedAt: new Date(),
-    decidedBy: toObjectId(decidedBy, "DecidedBy"),
-  };
 
   return application.save();
 };

@@ -4,7 +4,7 @@ import {
   hireApplicationHandler,
   interviewApplicationHandler,
   offerApplicationHandler,
-  rejectApplicationHandler,
+  secondInterviewApplicationHandler,
   shortlistApplicationHandler,
 } from "../controllers/applications.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
@@ -54,7 +54,7 @@ router.post("/", requireAuth, applyApplicationHandler);
  * @swagger
  * /api/applications/{id}/shortlist:
  *   patch:
- *     summary: Shortlist an application
+ *     summary: CV screening for an application
  *     tags: [Applications]
  *     security:
  *       - BearerAuth: []
@@ -66,7 +66,7 @@ router.post("/", requireAuth, applyApplicationHandler);
  *           type: string
  *         example: 6800c1a16541f34f61f7b999
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -114,7 +114,7 @@ router.patch("/:id/shortlist", requireAuth, shortlistApplicationHandler);
  * @swagger
  * /api/applications/{id}/interview:
  *   patch:
- *     summary: Move application to interview
+ *     summary: Complete first interview
  *     tags: [Applications]
  *     security:
  *       - BearerAuth: []
@@ -126,7 +126,7 @@ router.patch("/:id/shortlist", requireAuth, shortlistApplicationHandler);
  *           type: string
  *         example: 6800c1a16541f34f61f7b999
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -134,10 +134,10 @@ router.patch("/:id/shortlist", requireAuth, shortlistApplicationHandler);
  *             properties:
  *               note:
  *                 type: string
- *                 example: Manual interview completed
+ *                 example: First interview completed
  *     responses:
  *       200:
- *         description: Application moved to interview successfully
+ *         description: Application moved to first interview successfully
  *       400:
  *         description: Invalid payload
  *       401:
@@ -148,6 +148,49 @@ router.patch("/:id/shortlist", requireAuth, shortlistApplicationHandler);
  *         description: Server error
  */
 router.patch("/:id/interview", requireAuth, interviewApplicationHandler);
+
+/**
+ * @swagger
+ * /api/applications/{id}/interview-2:
+ *   patch:
+ *     summary: Complete second interview
+ *     tags: [Applications]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 6800c1a16541f34f61f7b999
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               note:
+ *                 type: string
+ *                 example: Second interview completed
+ *     responses:
+ *       200:
+ *         description: Application moved to second interview successfully
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Application not found
+ *       500:
+ *         description: Server error
+ */
+router.patch(
+  "/:id/interview-2",
+  requireAuth,
+  secondInterviewApplicationHandler,
+);
 
 /**
  * @swagger
@@ -165,7 +208,7 @@ router.patch("/:id/interview", requireAuth, interviewApplicationHandler);
  *           type: string
  *         example: 6800c1a16541f34f61f7b999
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -204,7 +247,7 @@ router.patch("/:id/offer", requireAuth, offerApplicationHandler);
  *           type: string
  *         example: 6800c1a16541f34f61f7b999
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -226,44 +269,5 @@ router.patch("/:id/offer", requireAuth, offerApplicationHandler);
  *         description: Server error
  */
 router.patch("/:id/hire", requireAuth, hireApplicationHandler);
-
-/**
- * @swagger
- * /api/applications/{id}/reject:
- *   patch:
- *     summary: Reject an application
- *     tags: [Applications]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         example: 6800c1a16541f34f61f7b999
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               note:
- *                 type: string
- *                 example: Candidate did not meet requirements
- *     responses:
- *       200:
- *         description: Application rejected successfully
- *       400:
- *         description: Invalid payload
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Application not found
- *       500:
- *         description: Server error
- */
-router.patch("/:id/reject", requireAuth, rejectApplicationHandler);
 
 export default router;

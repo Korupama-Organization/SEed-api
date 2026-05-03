@@ -6,7 +6,7 @@ import {
   ValidationError,
 } from "class-validator";
 
-export class RejectApplicationDto {
+export class SecondInterviewApplicationDto {
   @IsOptional()
   @IsString()
   note?: string;
@@ -43,10 +43,10 @@ const formatValidationErrors = (errors: ValidationError[]): string => {
   return flattenValidationErrors(errors).join("; ");
 };
 
-export const validateRejectApplicationDto = async (
+export const validateSecondInterviewApplicationDto = async (
   payload: unknown,
-): Promise<{ value?: RejectApplicationDto; error?: string }> => {
-  const dto = plainToInstance(RejectApplicationDto, payload);
+): Promise<{ value?: SecondInterviewApplicationDto; error?: string }> => {
+  const dto = plainToInstance(SecondInterviewApplicationDto, payload);
   const errors = await validate(dto, {
     whitelist: true,
     forbidNonWhitelisted: true,
