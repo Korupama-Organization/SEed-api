@@ -8,11 +8,18 @@ import {
   updateJobService, 
   deleteJobService, 
   publishJobService,
-  closeJobService 
+  closeJobService,
+  listCandidates,
+  listJobApplicants,
+  getApplicantProfileByJob,
 } from "../services/jobs.service";
 
 import { CreateJobDto} from "../dto/create-job.dto";
 import { UpdateJobDto } from "../dto/update-job.dto";
+
+const getQueryString = (value: unknown): string | undefined => {
+  return typeof value === "string" ? value : undefined;
+};
 
 export const getListJobs = async (
   req: Request,
@@ -34,6 +41,107 @@ export const getListJobs = async (
     }
 
     console.error("Get list jobs error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getListCandidates = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const result = await listCandidates(userId, {
+      page: getQueryString(req.query.page) || "1",
+      limit: getQueryString(req.query.limit) || "10",
+      search: getQueryString(req.query.search),
+      status: getQueryString(req.query.status),
+      hasProfile: getQueryString(req.query.hasProfile),
+      major: getQueryString(req.query.major),
+      university: getQueryString(req.query.university),
+    });
+
+    return res.status(200).json({
+      message: "Get list candidates successfully",
+      data: result.candidates,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Get list candidates error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getJobApplicants = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const jobId = req.params.id as string;
+
+    const result = await listJobApplicants(userId, jobId, {
+      page: getQueryString(req.query.page) || "1",
+      limit: getQueryString(req.query.limit) || "10",
+      search: getQueryString(req.query.search),
+    });
+
+    return res.status(200).json({
+      message: "Get job applicants successfully",
+      data: result.applicants,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Get job applicants error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getApplicantProfileByJobController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const jobId = req.params.id as string;
+    const applicationId = getQueryString(req.query.applicationId);
+    const candidateUserId = getQueryString(req.query.candidateUserId);
+
+    const result = await getApplicantProfileByJob(userId, jobId, {
+      applicationId,
+      candidateUserId,
+    });
+
+    return res.status(200).json({
+      message: "Get applicant profile successfully",
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Get applicant profile error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

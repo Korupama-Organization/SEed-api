@@ -4,16 +4,51 @@ import { CompanyMember } from "../models/CompanyMember";
 import { CreateJobDto } from "../dto/create-job.dto";
 import { UpdateJobDto } from "../dto/update-job.dto";
 import { Types } from "mongoose";
+import { User } from "../models/User";
+import { CandidateProfile } from "../models/CandidateProfile";
+import { Application, IApplication } from "../models/Application";
 
 interface JobsQuery {
   page?: string;
   limit?: string;
 }
 
+interface CandidateListQuery extends JobsQuery {
+  search?: string;
+  status?: string;
+  hasProfile?: string;
+  major?: string;
+  university?: string;
+}
+
+interface ApplicantsQuery extends JobsQuery {
+  search?: string;
+}
+
 type JobStatus = "draft" | "published" | "closed" | "archived" | "open";
 
 interface ListJobsResult {
   jobs: JobBasicDto[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+interface ListCandidatesResult {
+  candidates: Array<Record<string, unknown>>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+interface JobApplicantsResult {
+  applicants: Array<Record<string, unknown>>;
   pagination: {
     page: number;
     limit: number;
@@ -40,6 +75,37 @@ const parsePositiveInteger = (value: string | undefined, defaultValue: number, f
   return parsed;
 };
 
+const escapeRegex = (value: string): string => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const buildRegex = (value: string): RegExp => {
+  return new RegExp(escapeRegex(value.trim()), "i");
+};
+
+const parseBooleanQuery = (value: string | undefined): boolean | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === "true") {
+    return true;
+  }
+
+  if (value === "false") {
+    return false;
+  }
+
+  throw new JobsServiceError("hasProfile phải là true hoặc false", 400);
+};
+
+const getLatestApplicationStatus = (application: IApplication): string => {
+  return (
+    application.applicationStatus?.[application.applicationStatus.length - 1]
+      ?.status || ""
+  );
+};
+
 const assertJobAccess = async (
   userId: string,
   job: IJob,
@@ -61,6 +127,369 @@ const assertJobAccess = async (
   if (options.requirePermission && !companyMember.permission?.[options.requirePermission]) {
     throw new JobsServiceError(`Bạn không có quyền ${options.actionLabel} job`, 403);
   }
+};
+
+const assertApplicationViewerAccess = async (
+  userId: string,
+  job: IJob,
+): Promise<void> => {
+  const companyMember = await CompanyMember.findOne({
+    userId,
+    companyId: job.companyId,
+  }).lean();
+
+  if (!companyMember) {
+    throw new JobsServiceError("Bạn không thuộc công ty của job này", 403);
+  }
+
+  if (!companyMember.permission?.canViewApplications) {
+    throw new JobsServiceError("Bạn không có quyền xem danh sách ứng viên", 403);
+  }
+};
+
+const assertCandidateViewerAccess = async (userId: string): Promise<void> => {
+  const companyMember = await CompanyMember.findOne({ userId }).lean();
+
+  if (!companyMember) {
+    throw new JobsServiceError("Bạn không có quyền xem danh sách ứng viên", 403);
+  }
+
+  if (!companyMember.permission?.canViewApplications) {
+    throw new JobsServiceError("Bạn không có quyền xem danh sách ứng viên", 403);
+  }
+};
+
+const resolveCandidateProfileMap = async (userIds: Types.ObjectId[]) => {
+  if (userIds.length === 0) {
+    return new Map<string, any>();
+  }
+
+  const profiles = await CandidateProfile.find({
+    userId: { $in: userIds },
+  })
+    .select(
+      "userId academicInfo languages achievements advantagePoint technicalSkills softSkills projects workExperiences introductionQuestions updatedAt",
+    )
+    .lean();
+
+  return new Map(
+    profiles.map((profile: any) => [profile.userId.toString(), profile]),
+  );
+};
+
+const mapCandidateSummary = (user: any, profile: any | null) => {
+  return {
+    id: user._id.toString(),
+    userId: user._id.toString(),
+    fullName: user.fullName || "",
+    avatarUrl: user.avatarUrl || null,
+    status: user.status || "",
+    role: user.role || "candidate",
+    studentID: user.studentID || null,
+    contactInfo: {
+      email: user.contactInfo?.email || "",
+      phone: user.contactInfo?.phone || null,
+    },
+    hasProfile: Boolean(profile),
+    profile: profile
+      ? {
+          academicInfo: profile.academicInfo || null,
+          advantagePoint: profile.advantagePoint || null,
+          technicalSkillsCount: Array.isArray(profile.technicalSkills)
+            ? profile.technicalSkills.length
+            : 0,
+          softSkillsCount: Array.isArray(profile.softSkills)
+            ? profile.softSkills.length
+            : 0,
+          updatedAt: profile.updatedAt || null,
+        }
+      : null,
+  };
+};
+
+const resolveCandidateFilterIds = async (query: CandidateListQuery) => {
+  const hasProfile = parseBooleanQuery(query.hasProfile);
+  const major = query.major?.trim();
+  const university = query.university?.trim();
+
+  const profileFilter: Record<string, unknown> = {};
+  if (major) {
+    profileFilter["academicInfo.major"] = buildRegex(major);
+  }
+  if (university) {
+    profileFilter["academicInfo.university"] = buildRegex(university);
+  }
+
+  const needsProfileQuery =
+    hasProfile !== undefined || Object.keys(profileFilter).length > 0;
+
+  if (!needsProfileQuery) {
+    return { includeOnlyUserIds: [] as Types.ObjectId[], hasProfile, profileFilterApplied: false };
+  }
+
+  const profiles = await CandidateProfile.find(profileFilter)
+    .select("userId")
+    .lean();
+  const profileUserIds = profiles.map((profile: any) => profile.userId);
+
+  return { includeOnlyUserIds: profileUserIds, hasProfile, profileFilterApplied: true };
+};
+
+export const listCandidates = async (
+  userId: string,
+  query: CandidateListQuery,
+): Promise<ListCandidatesResult> => {
+  await assertCandidateViewerAccess(userId);
+
+  const pageNum = parsePositiveInteger(query.page, 1, "page");
+  const limitNum = parsePositiveInteger(query.limit, 10, "limit");
+  const skip = (pageNum - 1) * limitNum;
+
+  const userQuery: Record<string, unknown> = {
+    role: "candidate",
+  };
+
+  if (query.status) {
+    userQuery.status = query.status;
+  }
+
+  if (query.search?.trim()) {
+    const searchRegex = buildRegex(query.search);
+    userQuery.$or = [
+      { fullName: searchRegex },
+      { studentID: searchRegex },
+      { "contactInfo.email": searchRegex },
+      { "contactInfo.phone": searchRegex },
+    ];
+  }
+
+  const { includeOnlyUserIds, hasProfile, profileFilterApplied } = await resolveCandidateFilterIds(
+    query,
+  );
+
+  if (profileFilterApplied && hasProfile === true && includeOnlyUserIds.length === 0) {
+    return {
+      candidates: [],
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+  }
+
+  if (profileFilterApplied && hasProfile === false) {
+    if (includeOnlyUserIds.length > 0) {
+      userQuery._id = { $nin: includeOnlyUserIds };
+    }
+  } else if (profileFilterApplied && includeOnlyUserIds.length > 0) {
+    userQuery._id = { $in: includeOnlyUserIds };
+  } else if (profileFilterApplied && includeOnlyUserIds.length === 0) {
+    userQuery._id = { $in: [] };
+  }
+
+  const [users, total] = await Promise.all([
+    User.find(userQuery)
+      .select("fullName avatarUrl role status studentID contactInfo createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    User.countDocuments(userQuery),
+  ]);
+
+  const userIds = users.map((user: any) => user._id as Types.ObjectId);
+  const profileMap = await resolveCandidateProfileMap(userIds);
+
+  return {
+    candidates: users.map((user: any) =>
+      mapCandidateSummary(user, profileMap.get(user._id.toString()) || null),
+    ),
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
+  };
+};
+
+export const listJobApplicants = async (
+  userId: string,
+  jobId: string,
+  query: ApplicantsQuery,
+): Promise<JobApplicantsResult> => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
+  const job = await Job.findById(jobId).lean();
+  if (!job) {
+    throw new JobsServiceError("Job không tồn tại", 404);
+  }
+
+  await assertApplicationViewerAccess(userId, job as unknown as IJob);
+
+  const pageNum = parsePositiveInteger(query.page, 1, "page");
+  const limitNum = parsePositiveInteger(query.limit, 10, "limit");
+  const skip = (pageNum - 1) * limitNum;
+
+  const applicationQuery: Record<string, unknown> = {
+    jobId: new Types.ObjectId(jobId),
+  };
+
+  if (query.search?.trim()) {
+    const searchRegex = buildRegex(query.search);
+    const candidateUsers = await User.find({
+      role: "candidate",
+      $or: [
+        { fullName: searchRegex },
+        { studentID: searchRegex },
+        { "contactInfo.email": searchRegex },
+        { "contactInfo.phone": searchRegex },
+      ],
+    })
+      .select("_id")
+      .lean();
+
+    applicationQuery.candidateUserId = {
+      $in: candidateUsers.map((candidate: any) => candidate._id),
+    };
+  }
+
+  const [applications, total] = await Promise.all([
+    Application.find(applicationQuery)
+      .populate({
+        path: "candidateUserId",
+        select: "fullName avatarUrl role status studentID contactInfo createdAt updatedAt",
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Application.countDocuments(applicationQuery),
+  ]);
+
+  const pageUserIds = applications
+    .map((application: any) => application.candidateUserId?._id)
+    .filter(Boolean);
+  const profileMap = await resolveCandidateProfileMap(pageUserIds);
+
+  return {
+    applicants: applications.map((application: any) => {
+      const user = application.candidateUserId;
+      const profile = user?._id
+        ? profileMap.get(user._id.toString()) || null
+        : null;
+
+      return {
+        applicationId: application._id.toString(),
+        jobId: application.jobId.toString(),
+        currentStatus: getLatestApplicationStatus(application),
+        applicationStatus: application.applicationStatus || [],
+        screeningResults: application.screeningResults || null,
+        finalDecision: application.finalDecision || null,
+        createdAt: application.createdAt,
+        updatedAt: application.updatedAt,
+        candidate: user ? mapCandidateSummary(user, profile) : null,
+      };
+    }),
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
+  };
+};
+
+export const getApplicantProfileByJob = async (
+  userId: string,
+  jobId: string,
+  params: { applicationId?: string; candidateUserId?: string },
+) => {
+  if (!Types.ObjectId.isValid(jobId)) {
+    throw new JobsServiceError("Job ID không hợp lệ", 400);
+  }
+
+  const job = await Job.findById(jobId).lean();
+  if (!job) {
+    throw new JobsServiceError("Job không tồn tại", 404);
+  }
+
+  await assertApplicationViewerAccess(userId, job as unknown as IJob);
+
+  const applicationQuery: Record<string, unknown> = {
+    jobId: new Types.ObjectId(jobId),
+  };
+
+  if (params.applicationId) {
+    if (!Types.ObjectId.isValid(params.applicationId)) {
+      throw new JobsServiceError("Application ID không hợp lệ", 400);
+    }
+
+    applicationQuery._id = new Types.ObjectId(params.applicationId);
+  } else if (params.candidateUserId) {
+    if (!Types.ObjectId.isValid(params.candidateUserId)) {
+      throw new JobsServiceError("Candidate user ID không hợp lệ", 400);
+    }
+
+    applicationQuery.candidateUserId = new Types.ObjectId(params.candidateUserId);
+  } else {
+    throw new JobsServiceError(
+      "Cần cung cấp applicationId hoặc candidateUserId",
+      400,
+    );
+  }
+
+  const application = await Application.findOne(applicationQuery)
+    .populate({
+      path: "candidateUserId",
+      select: "fullName avatarUrl role status studentID contactInfo createdAt updatedAt",
+    })
+    .lean();
+
+  if (!application) {
+    throw new JobsServiceError("Ứng viên không apply vào job này", 404);
+  }
+
+  const candidateUser = application.candidateUserId as any;
+  if (!candidateUser?._id) {
+    throw new JobsServiceError("Không tìm thấy thông tin ứng viên", 404);
+  }
+
+  const profile = await CandidateProfile.findOne({
+    userId: candidateUser._id,
+  })
+    .populate({
+      path: "technicalSkills.skillId",
+      select: "_id skill_name category",
+    })
+    .populate({
+      path: "projects.technologies",
+      select: "_id skill_name category",
+    })
+    .populate({
+      path: "workExperiences.technologiesUsed",
+      select: "_id skill_name category",
+    })
+    .lean();
+
+  return {
+    jobId,
+    applicationId: application._id.toString(),
+    currentStatus: getLatestApplicationStatus(application as unknown as IApplication),
+    candidate: mapCandidateSummary(candidateUser, profile),
+    application: {
+      applicationStatus: application.applicationStatus || [],
+      screeningResults: application.screeningResults || null,
+      finalDecision: application.finalDecision || null,
+      createdAt: application.createdAt,
+      updatedAt: application.updatedAt,
+    },
+    profile,
+  };
 };
 
 export const listJobs = async (

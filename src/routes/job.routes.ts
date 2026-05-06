@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { 
   getListJobs, 
+  getListCandidates,
   getJobDetail, 
   createJobController, 
   updateJobController, 
   deleteJobController,
   publishJobController,
-  closeJobController 
+  closeJobController,
+  getJobApplicants,
+  getApplicantProfileByJobController,
 } from '../controllers/jobs.controller';
 
 import { requireAuth } from "../middlewares/auth.middleware";
@@ -128,6 +131,56 @@ router.get("/", getListJobs);
 
 /**
  * @swagger
+ * /api/jobs/candidates:
+ *   get:
+ *     summary: List candidates for recruiters
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *           default: "1"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: string
+ *           default: "10"
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: hasProfile
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *       - in: query
+ *         name: major
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: university
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Get list candidates successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ */
+router.get("/candidates", requireAuth, requireRole("recruiter"), getListCandidates);
+
+/**
+ * @swagger
  * /api/jobs/{id}:
  *   get:
  *     summary: Get job details by ID
@@ -219,6 +272,80 @@ router.get("/", getListJobs);
  *         description: Server error
  */
 router.get("/:id", requireAuth, getJobDetail);
+
+/**
+ * @swagger
+ * /api/jobs/{id}/applicants:
+ *   get:
+ *     summary: List candidates applied to a job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *           default: "1"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: string
+ *           default: "10"
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Get job applicants successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Job not found
+ */
+router.get("/:id/applicants", requireAuth, requireRole("recruiter"), getJobApplicants);
+
+/**
+ * @swagger
+ * /api/jobs/{id}/applicants/profile:
+ *   get:
+ *     summary: Get applicant profile by job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: applicationId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: candidateUserId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Get applicant profile successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Application or profile not found
+ */
+router.get("/:id/applicants/profile", requireAuth, requireRole("recruiter"), getApplicantProfileByJobController);
 
 /**
  * @swagger
