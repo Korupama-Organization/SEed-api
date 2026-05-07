@@ -133,7 +133,7 @@ router.get("/", getListJobs);
  * @swagger
  * /api/jobs/candidates:
  *   get:
- *     summary: List candidates for recruiters
+ *     summary: List all candidates who have applied to company's jobs
  *     tags: [Jobs]
  *     security:
  *       - BearerAuth: []
@@ -141,41 +141,105 @@ router.get("/", getListJobs);
  *       - in: query
  *         name: page
  *         schema:
- *           type: string
- *           default: "1"
+ *           type: integer
+ *           default: 1
+ *         description: Page number
  *       - in: query
  *         name: limit
  *         schema:
- *           type: string
- *           default: "10"
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
+ *         description: Search by fullName, studentID, email, or phone
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
+ *         description: Filter by user status (active, inactive, etc.)
  *       - in: query
  *         name: hasProfile
  *         schema:
- *           type: string
- *           enum: [true, false]
+ *           type: boolean
+ *         description: Filter by whether candidate has profile
  *       - in: query
  *         name: major
  *         schema:
  *           type: string
+ *         description: Filter by major from candidate profile
  *       - in: query
  *         name: university
  *         schema:
  *           type: string
+ *         description: Filter by university from candidate profile
  *     responses:
  *       200:
  *         description: Get list candidates successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       fullName:
+ *                         type: string
+ *                       avatarUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       role:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       studentID:
+ *                         type: string
+ *                         nullable: true
+ *                       contactInfo:
+ *                         type: object
+ *                         properties:
+ *                           email:
+ *                             type: string
+ *                           phone:
+ *                             type: string
+ *                       hasProfile:
+ *                         type: boolean
+ *                       academicInfo:
+ *                         type: object
+ *                         properties:
+ *                           university:
+ *                             type: string
+ *                           major:
+ *                             type: string
+ *                           graduationYear:
+ *                             type: integer
+ *                           gpa:
+ *                             type: number
+ *                         nullable: true
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       401:
  *         description: Authentication required
  *       403:
- *         description: Forbidden
+ *         description: Forbidden - only recruiter can access
  */
 router.get("/candidates", requireAuth, requireRole("recruiter"), getListCandidates);
 
