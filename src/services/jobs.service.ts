@@ -4,6 +4,7 @@ import { CompanyMember } from "../models/CompanyMember";
 import { CreateJobDto } from "../dto/create-job.dto";
 import { UpdateJobDto } from "../dto/update-job.dto";
 import { Types } from "mongoose";
+import { Counter } from "../models/Counter";
 
 interface JobsQuery {
   page?: string;
@@ -40,6 +41,97 @@ const parsePositiveInteger = (value: string | undefined, defaultValue: number, f
   return parsed;
 };
 
+const JOB_SLUG_COUNTER_KEY = "jobSlug";
+
+export const formatJobSlug = (sequence: number): string => `JOB-${sequence.toString().padStart(3, "0")}`;
+
+const getNextJobSlug = async (): Promise<string> => {
+  const counter = await Counter.findOneAndUpdate(
+    { key: JOB_SLUG_COUNTER_KEY },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return formatJobSlug(counter.seq);
+};
+
+const isDuplicateKeyError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const mongoError = error as Error & { code?: number };
+  return mongoError.code === 11000;
+};
+
+const createUniqueJobSlug = async (): Promise<string> => {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const slug = await getNextJobSlug();
+    const existingJob = await Job.exists({ slug });
+    if (!existingJob) {
+      return slug;
+    }
+  }
+
+  throw new JobsServiceError("Không thể tạo mã job duy nhất", 500);
+};
+
+const mapJobToBasicDto = (job: any): JobBasicDto => ({
+  id: job._id.toString(),
+  slug: job.slug || job._id.toString(),
+  companyId: {
+    _id: job.companyId?._id?.toString() || "",
+    name: job.companyId?.name || "",
+    logoUrl: job.companyId?.logoUrl,
+  },
+  basicInfo: {
+    title: job.basicInfo?.title || "",
+    summary: job.basicInfo?.summary || "",
+    jobDescription: job.basicInfo?.jobDescription || "",
+    roleType: job.basicInfo?.roleType || "",
+  },
+  location: (job.basicInfo?.locations && job.basicInfo.locations.length > 0) ? job.basicInfo.locations[0] : "Chưa cập nhật",
+  workModel: job.basicInfo?.workModel || "",
+  level: job.basicInfo?.level || "",
+  jobType: job.basicInfo?.jobType || "",
+  status: job.status,
+  createdAt: job.createdAt,
+  updatedAt: job.updatedAt,
+});
+
+const mapJobDetail = (job: any) => ({
+  ...job,
+  slug: job.slug || job._id.toString(),
+});
+
+const createJobDocument = async (
+  payload: {
+    companyId: Types.ObjectId;
+    createdBy: Types.ObjectId;
+    basicInfo: CreateJobDto["basicInfo"];
+    requirements: CreateJobDto["requirements"];
+    status: JobStatus;
+  },
+): Promise<IJob> => {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const slug = await createUniqueJobSlug();
+    try {
+      const newJob = new Job({
+        ...payload,
+        slug,
+      });
+      await newJob.save();
+      return newJob;
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  throw new JobsServiceError("Không thể tạo job mới", 500);
+};
+
 const assertJobAccess = async (
   userId: string,
   job: IJob,
@@ -72,7 +164,7 @@ export const listJobs = async (
 
   const [jobs, total] = await Promise.all([
     Job.find({ status: 'published' })
-      .select("companyId basicInfo status createdAt updatedAt")
+      .select("companyId slug basicInfo status createdAt updatedAt")
       .populate("companyId", "name logoUrl")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -81,28 +173,7 @@ export const listJobs = async (
     Job.countDocuments({ status: 'published' }),
   ]);
 
-  const jobBasic: JobBasicDto[] = jobs.map((job: any) => ({
-    id: job._id.toString(),
-    slug: `/api/jobs/${job._id}`,
-    companyId: {
-      _id: job.companyId?._id?.toString() || "",
-      name: job.companyId?.name || "",
-      logoUrl: job.companyId?.logoUrl,
-    },
-    basicInfo: {
-      title: job.basicInfo?.title || "",
-      summary: job.basicInfo?.summary || "",
-      jobDescription: job.basicInfo?.jobDescription || "",
-      roleType: job.basicInfo?.roleType || "",
-    },
-    location: (job.basicInfo?.locations && job.basicInfo.locations.length > 0) ? job.basicInfo.locations[0] : "Chưa cập nhật",
-    workModel: job.basicInfo?.workModel || "",
-    level: job.basicInfo?.level || "",
-    jobType: job.basicInfo?.jobType || "",
-    status: job.status,
-    createdAt: job.createdAt,
-    updatedAt: job.updatedAt,
-  }));
+  const jobBasic: JobBasicDto[] = jobs.map(mapJobToBasicDto);
 
   return {
     jobs: jobBasic,
@@ -137,7 +208,7 @@ export const getJobById = async (id: string): Promise<IJob> => {
     throw new JobsServiceError("Job not found", 404);
   }
 
-  return job as unknown as IJob;
+  return mapJobDetail(job) as unknown as IJob;
 };
 
 export const createJobService = async (
@@ -159,15 +230,13 @@ export const createJobService = async (
     throw new JobsServiceError("Vai trò hoặc quyền của bạn không thể tạo job", 403);
   }
 
-  const newJob = new Job({
+  const newJob = await createJobDocument({
     companyId: companyMember.companyId,
-    createdBy: userId,
+    createdBy: new Types.ObjectId(userId),
     basicInfo: data.basicInfo,
     requirements: data.requirements,
     status: "draft",
   });
-
-  await newJob.save();
 
   return newJob;
 };
