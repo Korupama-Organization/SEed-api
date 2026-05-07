@@ -147,16 +147,25 @@ const assertApplicationViewerAccess = async (
   }
 };
 
-const assertCandidateViewerAccess = async (userId: string): Promise<void> => {
-  const companyMember = await CompanyMember.findOne({ userId }).lean();
+const assertCandidateViewerAccess = async (
+  userId: string,
+): Promise<Types.ObjectId[]> => {
+  const companyMembers = await CompanyMember.find({
+    userId,
+    "permission.canViewApplications": true,
+  })
+    .select("companyId")
+    .lean();
 
-  if (!companyMember) {
+  if (companyMembers.length === 0) {
     throw new JobsServiceError("Bạn không có quyền xem danh sách ứng viên", 403);
   }
 
-  if (!companyMember.permission?.canViewApplications) {
-    throw new JobsServiceError("Bạn không có quyền xem danh sách ứng viên", 403);
-  }
+  const uniqueCompanyIds = Array.from(
+    new Set(companyMembers.map((member: any) => member.companyId.toString())),
+  ).map((companyId) => new Types.ObjectId(companyId));
+
+  return uniqueCompanyIds;
 };
 
 const resolveCandidateProfileMap = async (userIds: Types.ObjectId[]) => {
@@ -239,7 +248,7 @@ export const listCandidates = async (
   userId: string,
   query: CandidateListQuery,
 ): Promise<ListCandidatesResult> => {
-  await assertCandidateViewerAccess(userId);
+  const viewerCompanyIds = await assertCandidateViewerAccess(userId);
 
   const pageNum = parsePositiveInteger(query.page, 1, "page");
   const limitNum = parsePositiveInteger(query.limit, 10, "limit");
@@ -263,11 +272,13 @@ export const listCandidates = async (
     ];
   }
 
-  const { includeOnlyUserIds, hasProfile, profileFilterApplied } = await resolveCandidateFilterIds(
-    query,
-  );
+  const companyJobs = await Job.find({
+    companyId: { $in: viewerCompanyIds },
+  })
+    .select("_id")
+    .lean();
 
-  if (profileFilterApplied && hasProfile === true && includeOnlyUserIds.length === 0) {
+  if (companyJobs.length === 0) {
     return {
       candidates: [],
       pagination: {
@@ -279,15 +290,68 @@ export const listCandidates = async (
     };
   }
 
-  if (profileFilterApplied && hasProfile === false) {
-    if (includeOnlyUserIds.length > 0) {
-      userQuery._id = { $nin: includeOnlyUserIds };
-    }
-  } else if (profileFilterApplied && includeOnlyUserIds.length > 0) {
-    userQuery._id = { $in: includeOnlyUserIds };
-  } else if (profileFilterApplied && includeOnlyUserIds.length === 0) {
-    userQuery._id = { $in: [] };
+  const companyJobIds = companyJobs.map((job: any) => job._id);
+  const companyCandidateIds = (await Application.distinct("candidateUserId", {
+    jobId: { $in: companyJobIds },
+  })) as Types.ObjectId[];
+
+  if (companyCandidateIds.length === 0) {
+    return {
+      candidates: [],
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: 0,
+        totalPages: 0,
+      },
+    };
   }
+
+  let allowedCandidateIdStrings = new Set(
+    companyCandidateIds.map((candidateId) => candidateId.toString()),
+  );
+
+  const { includeOnlyUserIds, hasProfile, profileFilterApplied } = await resolveCandidateFilterIds(
+    query,
+  );
+
+  if (profileFilterApplied) {
+    const profileCandidateIdStrings = new Set(
+      includeOnlyUserIds.map((candidateId) => candidateId.toString()),
+    );
+
+    if (hasProfile === false) {
+      allowedCandidateIdStrings = new Set(
+        Array.from(allowedCandidateIdStrings).filter(
+          (candidateId) => !profileCandidateIdStrings.has(candidateId),
+        ),
+      );
+    } else {
+      allowedCandidateIdStrings = new Set(
+        Array.from(allowedCandidateIdStrings).filter((candidateId) =>
+          profileCandidateIdStrings.has(candidateId),
+        ),
+      );
+    }
+  }
+
+  if (allowedCandidateIdStrings.size === 0) {
+    return {
+      candidates: [],
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+  }
+
+  userQuery._id = {
+    $in: Array.from(allowedCandidateIdStrings).map(
+      (candidateId) => new Types.ObjectId(candidateId),
+    ),
+  };
 
   const [users, total] = await Promise.all([
     User.find(userQuery)
