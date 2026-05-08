@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { User } from "../models/User";
+import { Job } from "../models/Job";
+import { Counter } from "../models/Counter";
 import { disconnectRedis } from "../utils/redis";
 
 const connectDB = async (): Promise<void> => {
@@ -11,7 +13,11 @@ const connectDB = async (): Promise<void> => {
 
   try {
     const conn = await mongoose.connect(uri);
-    await User.syncIndexes();
+    await Promise.all([
+      User.syncIndexes(),
+      Job.syncIndexes(),
+      Counter.syncIndexes(),
+    ]);
     console.log(
       `MongoDB connected: ${conn.connection.host}/${conn.connection.name}`,
     );

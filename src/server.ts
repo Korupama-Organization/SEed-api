@@ -10,6 +10,7 @@ import companiesRoutes from "./routes/companies.routes";
 import jobRoutes from "./routes/job.routes";
 import applicationsRoutes from "./routes/applications.routes";
 import interviewSessionsRoutes from "./routes/interview-sessions.routes";
+import recruiterDashboardRoutes from "./routes/recruiter-dashboard.routes";
 import { validateRequiredEnv } from "./utils/env-validation";
 import swaggerSpec from "./utils/swagger";
 import swaggerUi from "swagger-ui-express";
@@ -51,6 +52,7 @@ app.use("/api/companies", companiesRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationsRoutes);
 app.use("/api/interview-sessions", interviewSessionsRoutes);
+app.use("/api/recruiter-dashboard", recruiterDashboardRoutes);
 
 const start = async () => {
   validateRequiredEnv();
