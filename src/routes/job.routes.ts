@@ -89,7 +89,7 @@ const router = Router();
  *                         format: date-time
  *                   example:
  *                     - id: "69e482591f19b056ccbeb2be"
- *                       slug: "/api/jobs/69e482591f19b056ccbeb2be"
+ *                       slug: "JOB-001"
  *                       companyId:
  *                         _id: "69da0e4f7228caa78a03750a"
  *                         name: "Công ty Cổ phần VNG"
@@ -154,6 +154,7 @@ router.get("/", getListJobs);
  *                   type: object
  *                   example:
  *                     _id: "69e482591f19b056ccbeb2bd"
+ *                     slug: "JOB-001"
  *                     companyId:
  *                       _id: "69da0e4f7228caa78a03750a"
  *                       name: "Công ty Cổ phần VNG"

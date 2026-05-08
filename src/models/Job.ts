@@ -25,6 +25,7 @@ export interface IJobRequirements {
 export interface IJob extends Document {
   companyId: Types.ObjectId;
   createdBy: Types.ObjectId;
+  slug: string;
   basicInfo: IJobBasicInfo;
   requirements: IJobRequirements;
   status: string;
@@ -64,11 +65,20 @@ const JobSchema = new Schema<IJob>(
   {
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    slug: { type: String },
     basicInfo: { type: JobBasicInfoSchema, required: true },
     requirements: { type: JobRequirementsSchema, required: true },
     status: { type: String, enum: ['published', 'open', 'closed', 'draft', 'archived'], default: 'draft' },
   },
   { timestamps: true }
+);
+
+JobSchema.index(
+  { slug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { slug: { $exists: true, $type: 'string' } },
+  }
 );
 
 export const Job = model<IJob>('Job', JobSchema);
