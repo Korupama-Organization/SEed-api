@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { 
   getListJobs, 
+  getListCandidates,
   getJobDetail, 
   createJobController, 
   updateJobController, 
   deleteJobController,
   publishJobController,
-  closeJobController 
+  closeJobController,
+  getJobApplicants,
+  getApplicantProfileByJobController,
 } from '../controllers/jobs.controller';
 
 import { requireAuth } from "../middlewares/auth.middleware";
@@ -128,6 +131,120 @@ router.get("/", getListJobs);
 
 /**
  * @swagger
+ * /api/jobs/candidates:
+ *   get:
+ *     summary: List all candidates who have applied to company's jobs
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by fullName, studentID, email, or phone
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by user status (active, inactive, etc.)
+ *       - in: query
+ *         name: hasProfile
+ *         schema:
+ *           type: boolean
+ *         description: Filter by whether candidate has profile
+ *       - in: query
+ *         name: major
+ *         schema:
+ *           type: string
+ *         description: Filter by major from candidate profile
+ *       - in: query
+ *         name: university
+ *         schema:
+ *           type: string
+ *         description: Filter by university from candidate profile
+ *     responses:
+ *       200:
+ *         description: Get list candidates successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       fullName:
+ *                         type: string
+ *                       avatarUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       role:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       studentID:
+ *                         type: string
+ *                         nullable: true
+ *                       contactInfo:
+ *                         type: object
+ *                         properties:
+ *                           email:
+ *                             type: string
+ *                           phone:
+ *                             type: string
+ *                       hasProfile:
+ *                         type: boolean
+ *                       academicInfo:
+ *                         type: object
+ *                         properties:
+ *                           university:
+ *                             type: string
+ *                           major:
+ *                             type: string
+ *                           graduationYear:
+ *                             type: integer
+ *                           gpa:
+ *                             type: number
+ *                         nullable: true
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden - only recruiter can access
+ */
+router.get("/candidates", requireAuth, requireRole("recruiter"), getListCandidates);
+
+/**
+ * @swagger
  * /api/jobs/{id}:
  *   get:
  *     summary: Get job details by ID
@@ -220,6 +337,80 @@ router.get("/", getListJobs);
  *         description: Server error
  */
 router.get("/:id", requireAuth, getJobDetail);
+
+/**
+ * @swagger
+ * /api/jobs/{id}/applicants:
+ *   get:
+ *     summary: List candidates applied to a job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *           default: "1"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: string
+ *           default: "10"
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Get job applicants successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Job not found
+ */
+router.get("/:id/applicants", requireAuth, requireRole("recruiter"), getJobApplicants);
+
+/**
+ * @swagger
+ * /api/jobs/{id}/applicants/profile:
+ *   get:
+ *     summary: Get applicant profile by job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: applicationId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: candidateUserId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Get applicant profile successfully
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Application or profile not found
+ */
+router.get("/:id/applicants/profile", requireAuth, requireRole("recruiter"), getApplicantProfileByJobController);
 
 /**
  * @swagger
