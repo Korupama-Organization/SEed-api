@@ -152,10 +152,10 @@ export const createJobService = async (
   }
 
   // check role and permission
-  const isRecruiter = companyMember.membershipRole === 'recruiter'; // role 'recruiter'
+  // const isRecruiter = companyMember.membershipRole === 'recruiter'; // role 'recruiter'
   const hasCreatePermission = companyMember.permission?.canCreateJob;
 
-  if (!isRecruiter || !hasCreatePermission) {
+  if (!hasCreatePermission) {
     throw new JobsServiceError("Vai trò hoặc quyền của bạn không thể tạo job", 403);
   }
 
