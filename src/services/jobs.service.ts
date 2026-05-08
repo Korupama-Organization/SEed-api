@@ -105,6 +105,8 @@ const getLatestApplicationStatus = (application: IApplication): string => {
     application.applicationStatus?.[application.applicationStatus.length - 1]
       ?.status || ""
   );
+};
+
 const JOB_SLUG_COUNTER_KEY = "jobSlug";
 
 export const formatJobSlug = (sequence: number): string => `JOB-${sequence.toString().padStart(3, "0")}`;
@@ -892,4 +894,6 @@ export const closeJobService = async (
   if (!updatedJob) {
     throw new JobsServiceError("Close job thất bại", 400);
   }
-}
+};
+
+

@@ -249,6 +249,8 @@ router.get("/candidates", requireAuth, requireRole("recruiter"), getListCandidat
  *   get:
  *     summary: Get job details by ID
  *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -419,7 +421,7 @@ router.get("/:id/applicants/profile", requireAuth, requireRole("recruiter"), get
  *     summary: Create a new job
  *     tags: [Jobs]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -485,12 +487,180 @@ router.get("/:id/applicants/profile", requireAuth, requireRole("recruiter"), get
  */
 router.post("/", requireAuth, requireRole("recruiter"), createJobController); 
 
+/**
+ * @swagger
+ * /api/jobs/{id}:
+ *   patch:
+ *     summary: Update a job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Partial job update payload. Do not send status here.
+ *             properties:
+ *               basicInfo:
+ *                 type: object
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   roleType:
+ *                     type: string
+ *                   headcount:
+ *                     type: number
+ *                   locations:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   workModel:
+ *                     type: string
+ *                   level:
+ *                     type: string
+ *                   jobType:
+ *                     type: string
+ *               requirements:
+ *                 type: object
+ *                 properties:
+ *                   requiredSkills:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   preferredSkills:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   requiredEducation:
+ *                     type: string
+ *                   minGpa:
+ *                     type: number
+ *                   requiredLanguages:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   minMonthsExperience:
+ *                     type: number
+ *                   portfolioExpected:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Job updated successfully
+ *       400:
+ *         description: Invalid request payload or invalid job state
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden - only recruiter with permission can update job
+ *       404:
+ *         description: Job not found
+ *       500:
+ *         description: Server error
+ */
 router.patch("/:id", requireAuth, requireRole("recruiter"), updateJobController);
 
+/**
+ * @swagger
+ * /api/jobs/{id}:
+ *   delete:
+ *     summary: Delete a job (archive it)
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID
+ *     responses:
+ *       200:
+ *         description: Job deleted successfully
+ *       400:
+ *         description: Invalid job state
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden - only recruiter with permission can delete job
+ *       404:
+ *         description: Job not found
+ *       500:
+ *         description: Server error
+ */
 router.delete("/:id", requireAuth, requireRole("recruiter"), deleteJobController);
 
+/**
+ * @swagger
+ * /api/jobs/{id}/publish:
+ *   patch:
+ *     summary: Publish a job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID
+ *     responses:
+ *       200:
+ *         description: Job published successfully
+ *       400:
+ *         description: Invalid job state
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden - only recruiter with permission can publish job
+ *       404:
+ *         description: Job not found
+ *       500:
+ *         description: Server error
+ */
 router.patch("/:id/publish", requireAuth, requireRole("recruiter"), publishJobController);
 
+/**
+ * @swagger
+ * /api/jobs/{id}/close:
+ *   patch:
+ *     summary: Close a job
+ *     tags: [Jobs]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID
+ *     responses:
+ *       200:
+ *         description: Job closed successfully
+ *       400:
+ *         description: Invalid job state
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden - only recruiter with permission can close job
+ *       404:
+ *         description: Job not found
+ *       500:
+ *         description: Server error
+ */
 router.patch("/:id/close", requireAuth, requireRole("recruiter"), closeJobController);
 
 export default router;
