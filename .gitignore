@@ -3,3 +3,4 @@ node_modules
 dist
 ./studuy-api
 .DS_Store
+recruit-dashboard-api-curl.sh

@@ -715,11 +715,11 @@ export const createJobService = async (
     throw new JobsServiceError("Tài khoản không là thành viên của công ty nào, không thể tạo job.", 403);
   }
 
-  // check role and permission
-  // const isRecruiter = companyMember.membershipRole === 'recruiter'; // role 'recruiter'
+  // check membership role and permission
+  const canCreateByRole = ["manager", "recruiter"].includes(companyMember.membershipRole);
   const hasCreatePermission = companyMember.permission?.canCreateJob;
 
-  if (!hasCreatePermission) {
+  if (!canCreateByRole || !hasCreatePermission) {
     throw new JobsServiceError("Vai trò hoặc quyền của bạn không thể tạo job", 403);
   }
 
@@ -894,6 +894,4 @@ export const closeJobService = async (
   if (!updatedJob) {
     throw new JobsServiceError("Close job thất bại", 400);
   }
-};
-
-
+}
