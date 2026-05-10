@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem D:\\\\CodeProjects\\\\SEeds\\\\SEed-api\\\\src -Recurse -Depth 3 | Select-Object FullName, Mode | Where-Object { $_.Mode -match 'd' } | Sort-Object FullName)",
+      "PowerShell(Get-ChildItem D:\\\\CodeProjects\\\\SEeds\\\\SEed-api\\\\src -Directory -Recurse | ForEach-Object { $_.FullName })",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
