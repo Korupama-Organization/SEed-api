@@ -49,10 +49,17 @@ export const getCompanyMemberById = async (
   const currentMember = await getCurrentUserMembership(userId);
   const companyId = currentMember.companyId;
 
-  const member = await CompanyMember.findOne({
+  let member = await CompanyMember.findOne({
     _id: memberId,
     companyId,
   }).populate("userId", "fullName email avatarUrl role status");
+
+  if (!member) {
+    member = await CompanyMember.findOne({
+      userId: memberId,
+      companyId,
+    }).populate("userId", "fullName email avatarUrl role status");
+  }
 
   if (!member) {
     throw new CompanyMemberError("Thành viên không tồn tại.", 404);
@@ -125,10 +132,17 @@ export const updateCompanyMember = async (
   const currentMember = await getCurrentUserMembership(userId);
   assertManager(currentMember);
 
-  const member = await CompanyMember.findOne({
+  let member = await CompanyMember.findOne({
     _id: memberId,
     companyId: currentMember.companyId,
   });
+
+  if (!member) {
+    member = await CompanyMember.findOne({
+      userId: memberId,
+      companyId: currentMember.companyId,
+    });
+  }
 
   if (!member) {
     throw new CompanyMemberError("Thành viên không tồn tại.", 404);
@@ -176,10 +190,17 @@ export const removeCompanyMember = async (
   const currentMember = await getCurrentUserMembership(userId);
   assertManager(currentMember);
 
-  const member = await CompanyMember.findOne({
+  let member = await CompanyMember.findOne({
     _id: memberId,
     companyId: currentMember.companyId,
   });
+
+  if (!member) {
+    member = await CompanyMember.findOne({
+      userId: memberId,
+      companyId: currentMember.companyId,
+    });
+  }
 
   if (!member) {
     throw new CompanyMemberError("Thành viên không tồn tại.", 404);
