@@ -23,6 +23,46 @@ npm run dev
 npm run build
 ```
 
+## Docker Deployment
+
+This deployment expects MongoDB to run outside Docker, such as MongoDB Atlas or an existing MongoDB server. Set `MONGODB_URI` in `.env` to that external connection string.
+
+1. Configure production environment
+```bash
+cp .env.example .env
+```
+
+Fill every required startup value in `.env`, including `MONGODB_URI`, JWT secrets, SMTP values, LiveKit values, and `UIT_AUTH_SECRET`.
+
+2. Build the image
+```bash
+docker build -t studuy-api .
+```
+
+3. Start with Docker Compose
+```bash
+docker compose up -d --build
+```
+
+4. Check container status and logs
+```bash
+docker compose ps
+docker compose logs -f api
+```
+
+5. Verify the API
+```bash
+curl http://localhost:${HOST_PORT:-3000}/
+curl http://localhost:${HOST_PORT:-3000}/api-docs.json
+```
+
+6. Stop the deployment
+```bash
+docker compose down
+```
+
+`docker-compose.yml` exposes `${HOST_PORT:-3000}` on the VPS and forwards it to `${PORT:-3000}` inside the container. The root endpoint `/` is used as the container healthcheck, and Swagger UI is available at `/api-docs`.
+
 ## Test Commands
 
 - Full test runner

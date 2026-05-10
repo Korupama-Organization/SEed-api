@@ -8,12 +8,12 @@ import {
   encryptPassword,
 } from "uit-authenticator";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware";
-import { REDIS_KEYS } from "../constants";
+import { TEMP_KEYS } from "../constants";
 import {
   deleteTempValue,
   deleteTempValueIfMatch,
   setTempValue,
-} from "../utils/redis";
+} from "../utils/temp-store";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -59,7 +59,7 @@ const hashToken = (token: string): string => {
 };
 
 const getRefreshTokenKey = (token: string): string => {
-  return REDIS_KEYS.refreshToken(hashToken(token));
+  return TEMP_KEYS.refreshToken(hashToken(token));
 };
 
 const getRefreshTokenTtlSeconds = (exp?: number): number => {

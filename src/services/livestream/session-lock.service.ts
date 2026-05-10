@@ -1,5 +1,5 @@
-import { APP_CONFIG, REDIS_KEYS } from '../../constants';
-import { deleteTempValueIfMatch, getTempValue, refreshTempValueIfMatch, setTempValueIfAbsent } from '../../utils/redis';
+import { APP_CONFIG, TEMP_KEYS } from '../../constants';
+import { deleteTempValueIfMatch, getTempValue, refreshTempValueIfMatch, setTempValueIfAbsent } from '../../utils/temp-store';
 
 interface JoinLockResult {
     allowed: boolean;
@@ -9,7 +9,7 @@ interface JoinLockResult {
 const RECONNECT_GRACE_SECONDS = APP_CONFIG.livestreamLockTtlSeconds;
 
 const buildKey = (livestreamId: string, userId: string): string => {
-    return REDIS_KEYS.livestreamActiveSession(livestreamId, userId);
+    return TEMP_KEYS.livestreamActiveSession(livestreamId, userId);
 };
 
 export const acquireJoinLock = async (

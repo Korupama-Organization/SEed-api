@@ -6,8 +6,6 @@ const REQUIRED_ENV_VARS = [
     'SMTP_HOST',
     'SMTP_USER',
     'SMTP_PASS',
-    'REDIS_HOST',
-    'REDIS_PORT',
     'LIVEKIT_URL',
     'LIVEKIT_API_KEY',
     'LIVEKIT_API_SECRET',

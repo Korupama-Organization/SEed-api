@@ -22,10 +22,6 @@ export const APP_CONFIG = {
     refreshTokenExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     resetPasswordSecret: process.env.JWT_RESET_PASSWORD_SECRET || '',
     resetPasswordExpiresIn: process.env.JWT_RESET_PASSWORD_EXPIRES_IN || '15m',
-    redisUsername: process.env.REDIS_USERNAME || 'default',
-    redisPassword: process.env.REDIS_PASSWORD || '',
-    redisHost: process.env.REDIS_HOST || '',
-    redisPort: asNumber(process.env.REDIS_PORT, 0),
     otpLength: asNumber(process.env.OTP_LENGTH, 6),
     otpTtlSeconds: asNumber(process.env.OTP_TTL_SECONDS, 300),
     otpResendCooldownSeconds: asNumber(process.env.OTP_RESEND_COOLDOWN_SECONDS, 60),
@@ -47,11 +43,7 @@ export const APP_CONFIG = {
     payosWebhookUrl: process.env.PAYOS_WEBHOOK_URL || '',
 };
 
-export const REDIS_KEYS = {
-    verifyEmailOtp: (email: string) => `auth:verify-email:otp:${email.toLowerCase()}`,
-    verifyEmailCooldown: (email: string) => `auth:verify-email:cooldown:${email.toLowerCase()}`,
-    forgotPasswordOtp: (email: string) => `auth:forgot-password:otp:${email.toLowerCase()}`,
-    forgotPasswordCooldown: (email: string) => `auth:forgot-password:cooldown:${email.toLowerCase()}`,
+export const TEMP_KEYS = {
     refreshToken: (tokenHash: string) => `auth:refresh-token:${tokenHash}`,
     livestreamActiveSession: (sessionId: string, userId: string) => `livestream:active:${sessionId}:${userId}`,
 };

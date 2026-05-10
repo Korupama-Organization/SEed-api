@@ -41,7 +41,7 @@ export class ReconnectCheck extends Checker {
     if (!reconnectingTriggered) {
       throw new Error('Did not attempt to reconnect');
     } else if (!reconnected || room.state !== ConnectionState.Connected) {
-      this.appendWarning('reconnection is only possible in Redis-based configurations');
+      this.appendWarning('reconnection is only possible in stateful server configurations');
       throw new Error('Not able to reconnect');
     }
   }
