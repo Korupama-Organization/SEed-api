@@ -59,7 +59,7 @@ app.use("/api/company-members", companyMembersRoutes);
 const start = async () => {
   validateRequiredEnv();
   await connectDB();
-  httpServer = app.listen(PORT, () => {
+  httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is up and running at http://localhost:${PORT}`);
   });
 };
