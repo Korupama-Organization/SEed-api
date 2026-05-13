@@ -6,6 +6,7 @@ import {
   getMember,
   listMembers,
   updateMember,
+  updateProfile,
 } from "../controllers/company-members.controller";
 
 const router = Router();
@@ -133,6 +134,111 @@ router.get("/", requireAuth, listMembers);
  *       500:
  *         description: Server error
  */
+/**
+ * @swagger
+ * /api/company-members/profile:
+ *   patch:
+ *     summary: Update current recruiter's personal profile
+ *     tags: [Company Members]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Nguyễn Văn A
+ *               phone:
+ *                 type: string
+ *                 example: "0912345678"
+ *               linkedinUrl:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://linkedin.com/in/recruiter
+ *               githubUrl:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://github.com/recruiter
+ *               facebookUrl:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://facebook.com/recruiter
+ *               avatarUrl:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://example.com/avatar.jpg
+ *               gender:
+ *                 type: string
+ *                 enum: [Nam, Nữ, Khác]
+ *                 example: Nam
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 example: "2000-01-15"
+ *               jobTitle:
+ *                 type: string
+ *                 example: Senior Recruiter
+ *               membershipRole:
+ *                 type: string
+ *                 enum: [manager, recruiter, interviewer]
+ *                 description: Role within the company
+ *                 example: recruiter
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     avatarUrl:
+ *                       type: string
+ *                     gender:
+ *                       type: string
+ *                     dateOfBirth:
+ *                       type: string
+ *                       format: date
+ *                     contactInfo:
+ *                       type: object
+ *                       properties:
+ *                         email:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         linkedinUrl:
+ *                           type: string
+ *                         githubUrl:
+ *                           type: string
+ *                         facebookUrl:
+ *                           type: string
+ *                     role:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User has not joined any company
+ *       500:
+ *         description: Server error
+ */
+router.patch("/profile", requireAuth, updateProfile);
+
 router.get("/:memberId", requireAuth, getMember);
 
 /**

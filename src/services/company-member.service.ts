@@ -2,6 +2,7 @@ import { CompanyMember, ICompanyMember } from "../models/CompanyMember";
 import { User } from "../models/User";
 import { CreateCompanyMemberDto } from "../dto/create-company-member.dto";
 import { UpdateCompanyMemberDto } from "../dto/update-company-member.dto";
+import { UpdateRecruiterProfileDto } from "../dto/update-recruiter-profile.dto";
 
 export class CompanyMemberError extends Error {
   statusCode: number;
@@ -192,6 +193,48 @@ export const updateCompanyMember = async (
 
   await member.save();
   return member;
+};
+
+export const updateRecruiterProfile = async (
+  userId: string,
+  dto: UpdateRecruiterProfileDto,
+) => {
+  const currentMember = await getCurrentUserMembership(userId);
+
+  const $set: Record<string, unknown> = {};
+
+  if (dto.fullName !== undefined) $set.fullName = dto.fullName;
+  if (dto.avatarUrl !== undefined) $set.avatarUrl = dto.avatarUrl;
+  if (dto.gender !== undefined) $set.gender = dto.gender;
+  if (dto.dateOfBirth !== undefined) $set.dateOfBirth = new Date(dto.dateOfBirth);
+  if (dto.phone !== undefined) $set["contactInfo.phone"] = dto.phone;
+  if (dto.linkedinUrl !== undefined) $set["contactInfo.linkedinUrl"] = dto.linkedinUrl;
+  if (dto.githubUrl !== undefined) $set["contactInfo.githubUrl"] = dto.githubUrl;
+  if (dto.facebookUrl !== undefined) $set["contactInfo.facebookUrl"] = dto.facebookUrl;
+
+  const updated = await User.findByIdAndUpdate(
+    userId,
+    { $set },
+    { new: true },
+  ).select("fullName contactInfo avatarUrl gender dateOfBirth role status");
+
+  if (dto.membershipRole !== undefined || dto.jobTitle !== undefined) {
+    const memberUpdate: Record<string, unknown> = {};
+    if (dto.membershipRole !== undefined) memberUpdate.membershipRole = dto.membershipRole;
+    if (dto.jobTitle !== undefined) memberUpdate.jobTitle = dto.jobTitle;
+    await CompanyMember.findByIdAndUpdate(currentMember._id, { $set: memberUpdate });
+  }
+
+  const updatedMember = await CompanyMember.findById(currentMember._id)
+    .populate("userId", "fullName contactInfo avatarUrl role status");
+
+  const doc = updatedMember!.toObject();
+  const user = doc.userId as any;
+
+  return {
+    ...doc,
+    email: user?.contactInfo?.email || null,
+  };
 };
 
 export const removeCompanyMember = async (

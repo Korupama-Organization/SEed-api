@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import { validateCreateCompanyMemberDto } from "../dto/create-company-member.dto";
 import { validateUpdateCompanyMemberDto } from "../dto/update-company-member.dto";
+import { validateUpdateRecruiterProfileDto } from "../dto/update-recruiter-profile.dto";
 import {
   CompanyMemberError,
   createCompanyMember,
@@ -9,6 +10,7 @@ import {
   listCompanyMembers,
   removeCompanyMember,
   updateCompanyMember,
+  updateRecruiterProfile,
 } from "../services/company-member.service";
 
 export const listMembers = async (
@@ -142,6 +144,35 @@ export const deleteMember = async (
       return res.status(error.statusCode).json({ message: error.message });
     }
     console.error("Delete company member error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const updateProfile = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { value, error } = validateUpdateRecruiterProfileDto(req.body);
+    if (error || !value) {
+      return res.status(400).json({ message: error || "Invalid payload" });
+    }
+
+    const data = await updateRecruiterProfile(userId, value);
+    return res.status(200).json({
+      message: "Cập nhật profile thành công.",
+      data,
+    });
+  } catch (error: any) {
+    if (error instanceof CompanyMemberError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+    console.error("Update recruiter profile error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
