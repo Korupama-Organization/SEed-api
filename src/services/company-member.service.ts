@@ -36,10 +36,19 @@ export const listCompanyMembers = async (userId: string) => {
   const companyId = currentMember.companyId;
 
   const members = await CompanyMember.find({ companyId })
-    .populate("userId", "fullName email avatarUrl role status")
+    .populate("userId", "fullName contactInfo avatarUrl role status")
     .sort({ createdAt: -1 });
 
-  return { companyId: String(companyId), members };
+  const mapped = members.map((m) => {
+    const doc = m.toObject();
+    const user = doc.userId as any;
+    return {
+      ...doc,
+      email: user?.contactInfo?.email || null,
+    };
+  });
+
+  return { companyId: String(companyId), members: mapped };
 };
 
 export const getCompanyMemberById = async (
@@ -52,20 +61,22 @@ export const getCompanyMemberById = async (
   let member = await CompanyMember.findOne({
     _id: memberId,
     companyId,
-  }).populate("userId", "fullName email avatarUrl role status");
+  }).populate("userId", "fullName contactInfo avatarUrl role status");
 
   if (!member) {
     member = await CompanyMember.findOne({
       userId: memberId,
       companyId,
-    }).populate("userId", "fullName email avatarUrl role status");
+    }).populate("userId", "fullName contactInfo avatarUrl role status");
   }
 
   if (!member) {
     throw new CompanyMemberError("Thành viên không tồn tại.", 404);
   }
 
-  return member;
+  const doc = member.toObject();
+  const user = doc.userId as any;
+  return { ...doc, email: user?.email || null };
 };
 
 export const createCompanyMember = async (

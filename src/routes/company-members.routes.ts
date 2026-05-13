@@ -35,6 +35,9 @@ const router = Router();
  *                     properties:
  *                       _id:
  *                         type: string
+ *                       email:
+ *                         type: string
+ *                         nullable: true
  *                       userId:
  *                         type: object
  *                         properties:
@@ -42,8 +45,11 @@ const router = Router();
  *                             type: string
  *                           fullName:
  *                             type: string
- *                           email:
- *                             type: string
+ *                           contactInfo:
+ *                             type: object
+ *                             properties:
+ *                               email:
+ *                                 type: string
  *                           avatarUrl:
  *                             type: string
  *                           role:
@@ -86,6 +92,40 @@ router.get("/", requireAuth, listMembers);
  *     responses:
  *       200:
  *         description: Member details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                   nullable: true
+ *                 userId:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     avatarUrl:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                 membershipRole:
+ *                   type: string
+ *                 jobTitle:
+ *                   type: string
+ *                 permission:
+ *                   type: object
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
  *       401:
  *         description: Unauthorized
  *       404:
