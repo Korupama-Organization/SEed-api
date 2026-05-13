@@ -1,6 +1,8 @@
+import bcrypt from "bcrypt";
 import { CompanyMember, ICompanyMember } from "../models/CompanyMember";
 import { User } from "../models/User";
 import { CreateCompanyMemberDto } from "../dto/create-company-member.dto";
+import { CreateCompanyMemberAuthDto } from "../dto/create-company-member-auth.dto";
 import { UpdateCompanyMemberDto } from "../dto/update-company-member.dto";
 import { UpdateRecruiterProfileDto } from "../dto/update-recruiter-profile.dto";
 
@@ -134,6 +136,78 @@ export const createCompanyMember = async (
   });
 
   return member;
+};
+
+export const createCompanyMemberWithAuth = async (
+  userId: string,
+  dto: CreateCompanyMemberAuthDto,
+) => {
+  const currentMember = await getCurrentUserMembership(userId);
+  assertManager(currentMember);
+
+  const existingUser = await User.findOne({
+    $or: [
+      { "normalAuth.email": dto.email },
+      { "contactInfo.email": dto.email },
+    ],
+  });
+  if (existingUser) {
+    throw new CompanyMemberError("Email đã được đăng ký.", 409);
+  }
+
+  const passwordHash = await bcrypt.hash(dto.password, 10);
+  const now = new Date();
+
+  const newUser = await User.create({
+    role: "recruiter",
+    authMethod: "normal_auth",
+    status: "active",
+    fullName: dto.fullName,
+    gender: dto.gender,
+    avatarUrl: dto.avatarUrl,
+    normalAuth: {
+      email: dto.email,
+      passwordHash,
+      passwordUpdatedAt: now,
+    },
+    contactInfo: {
+      email: dto.email,
+      phone: dto.phone ?? null,
+      linkedinUrl: dto.linkedinUrl,
+      githubUrl: dto.githubUrl,
+      facebookUrl: dto.facebookUrl,
+    },
+  });
+
+  const defaults = {
+    canCreateJob: false,
+    canUpdateJob: false,
+    canDeleteJob: false,
+    canViewApplications: true,
+    canUpdateApplicationStatus: false,
+    canScheduleInterviews: false,
+  };
+
+  const member = await CompanyMember.create({
+    userId: newUser._id,
+    companyId: currentMember.companyId,
+    membershipRole: dto.membershipRole,
+    jobTitle: dto.jobTitle,
+    permission: dto.permission
+      ? { ...defaults, ...dto.permission }
+      : defaults,
+  });
+
+  const populated = await CompanyMember.findById(member._id)
+    .populate("userId", "fullName contactInfo avatarUrl role status");
+
+  const doc = populated!.toObject();
+  const user = doc.userId as any;
+
+  return {
+    ...doc,
+    email: user?.contactInfo?.email || null,
+  };
 };
 
 export const updateCompanyMember = async (
