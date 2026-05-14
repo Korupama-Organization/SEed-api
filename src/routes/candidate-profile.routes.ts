@@ -3,6 +3,7 @@ import {
   getMyCandidateProfileCompletion,
   updateMyCandidateProfile,
 } from "../controllers/candidate-profile.controller";
+import { getMyCandidateProfile } from "../controllers/candidate-profile.controller";
 import { getMyCandidateDashboard } from "../controllers/candidate-dashboard.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/domain-authorization.middleware";
@@ -202,6 +203,43 @@ router.get(
   requireAuth,
   requireRole("candidate"),
   getMyCandidateProfileCompletion,
+);
+
+/**
+ * @swagger
+ * /api/candidate-profiles/me:
+ *   get:
+ *     summary: Get full candidate profile for authenticated user
+ *     description: Returns the candidate profile with populated skill information and derived fields.
+ *     tags: [CandidateProfile]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Candidate profile fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Candidate profile not found
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/me",
+  requireAuth,
+  requireRole("candidate"),
+  getMyCandidateProfile,
 );
 
 export default router;
