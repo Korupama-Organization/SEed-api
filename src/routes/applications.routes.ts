@@ -7,6 +7,7 @@ import {
   secondInterviewApplicationHandler,
   shortlistApplicationHandler,
 } from "../controllers/applications.controller";
+import { getCandidateApplicationsStatusController } from "../controllers/jobs.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
@@ -269,5 +270,118 @@ router.patch("/:id/offer", requireAuth, offerApplicationHandler);
  *         description: Server error
  */
 router.patch("/:id/hire", requireAuth, hireApplicationHandler);
+
+/**
+ * @swagger
+ * /api/applications:
+ *   get:
+ *     summary: Get all jobs with candidate's application status
+ *     tags: [Applications]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Get candidate applications status successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       jobId:
+ *                         type: string
+ *                       jobInfo:
+ *                         type: object
+ *                         properties:
+ *                           slug:
+ *                             type: string
+ *                           companyId:
+ *                             type: object
+ *                             properties:
+ *                               _id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               logoUrl:
+ *                                 type: string
+ *                           basicInfo:
+ *                             type: object
+ *                             properties:
+ *                               title:
+ *                                 type: string
+ *                               description:
+ *                                 type: string
+ *                               roleType:
+ *                                 type: string
+ *                               headcount:
+ *                                 type: number
+ *                               locations:
+ *                                 type: array
+ *                                 items:
+ *                                   type: string
+ *                               workModel:
+ *                                 type: string
+ *                               level:
+ *                                 type: string
+ *                               jobType:
+ *                                 type: string
+ *                           status:
+ *                             type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
+ *                       applicationStatus:
+ *                         type: string
+ *                         nullable: true
+ *                         enum: [applied, screening_passed, ai_interview_completed, manual_interview_completed, offered, hired, null]
+ *                         description: Latest application status, or null if not applied
+ *                       applicationId:
+ *                         type: string
+ *                         nullable: true
+ *                         description: Application ID if candidate has applied
+ *                       appliedAt:
+ *                         type: string
+ *                         format: date-time
+ *                         nullable: true
+ *                         description: Timestamp when candidate applied
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Server error
+ */
+router.get("/", requireAuth, getCandidateApplicationsStatusController);
 
 export default router;

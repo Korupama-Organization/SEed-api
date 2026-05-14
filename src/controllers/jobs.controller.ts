@@ -12,6 +12,7 @@ import {
   listCandidates,
   listJobApplicants,
   getApplicantProfileByJob,
+  getCandidateApplicationsStatus,
 } from "../services/jobs.service";
 
 import { CreateJobDto} from "../dto/create-job.dto";
@@ -300,6 +301,36 @@ export const closeJobController = async (
     }
 
     console.error("Close job error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+export const getCandidateApplicationsStatusController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const result = await getCandidateApplicationsStatus(userId, {
+      page: getQueryString(req.query.page) || "1",
+      limit: getQueryString(req.query.limit) || "10",
+    });
+
+    return res.status(200).json({
+      message: "Get candidate applications status successfully",
+      data: result.jobs,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    if (error instanceof JobsServiceError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Get candidate applications status error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 }
