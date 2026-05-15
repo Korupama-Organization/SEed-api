@@ -50,7 +50,7 @@ export interface IWorkExperience {
   companyName: string;
   position: string;
   startDate: Date;
-  endDate: Date;
+  endDate?: Date;
   description: string;
   technologiesUsed: Types.ObjectId[];
 }
@@ -88,9 +88,9 @@ export interface ICandidateProfile extends Document {
 
 const AcademicInfoSchema = new Schema<IAcademicInfo>(
   {
-    university: { type: String, required: true },
-    major: { type: String, required: true },
-    graduationYear: { type: Number, required: true },
+    university: { type: String, default: "" },
+    major: { type: String, default: "" },
+    graduationYear: Number,
     gpa: Number,
   },
   { _id: false },
@@ -158,7 +158,7 @@ const WorkExperienceSchema = new Schema<IWorkExperience>(
     companyName: { type: String, required: true },
     position: { type: String, required: true },
     startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    endDate: Date,
     description: { type: String, required: true },
     technologiesUsed: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
   },
@@ -184,9 +184,9 @@ const IntroductionQuestionsSchema = new Schema<IIntroductionQuestions>(
         },
       },
     ],
-    whyTheseRoles: { type: String, required: true },
-    futureGoals: { type: String, required: true },
-    favoriteTechnology: { type: String, required: true },
+    whyTheseRoles: { type: String, default: "" },
+    futureGoals: { type: String, default: "" },
+    favoriteTechnology: { type: String, default: "" },
   },
   { _id: false },
 );
@@ -199,7 +199,7 @@ const CandidateProfileSchema = new Schema<ICandidateProfile>(
       required: true,
       unique: true,
     },
-    academicInfo: { type: AcademicInfoSchema, required: true },
+    academicInfo: { type: AcademicInfoSchema, default: () => ({}) },
     languages: { type: [LanguageSchema], default: [] },
     achievements: { type: [AchievementSchema], default: [] },
     advantagePoint: String,
@@ -209,7 +209,7 @@ const CandidateProfileSchema = new Schema<ICandidateProfile>(
     workExperiences: { type: [WorkExperienceSchema], default: [] },
     introductionQuestions: {
       type: IntroductionQuestionsSchema,
-      required: true,
+      default: () => ({}),
     },
   },
   { timestamps: true },

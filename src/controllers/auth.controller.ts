@@ -149,6 +149,66 @@ const findUserByNormalizedEmail = async (normalizedEmail: string) => {
   });
 };
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+class UserProfileValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UserProfileValidationError";
+  }
+}
+
+const getTrimmedOptionalString = (
+  payload: Record<string, unknown>,
+  key: string,
+): string | undefined => {
+  if (!Object.prototype.hasOwnProperty.call(payload, key)) {
+    return undefined;
+  }
+
+  const value = payload[key];
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return typeof value === "string" ? value.trim() : String(value).trim();
+};
+
+const normalizeGenderInput = (value: unknown): IUser["gender"] | undefined => {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (["nam", "male", "m"].includes(normalized)) {
+    return "Nam";
+  }
+
+  if (["nữ", "nu", "female", "f"].includes(normalized)) {
+    return "Nữ";
+  }
+
+  if (["khác", "khac", "other", "o"].includes(normalized)) {
+    return "Khác";
+  }
+
+  throw new UserProfileValidationError("Giới tính không hợp lệ.");
+};
+
+const assignOptionalContactField = (
+  contactInfo: Record<string, unknown>,
+  key: "phone" | "githubUrl" | "linkedinUrl" | "facebookUrl" | "portfolioUrl",
+  value: string | undefined,
+) => {
+  if (value === undefined) {
+    return;
+  }
+
+  contactInfo[key] = value || undefined;
+};
+
 export const registerHrUser = async (req: Request, res: Response) => {
   try {
     const {
@@ -386,6 +446,132 @@ export const getCurrentUser = async (
     }
 
     console.error("Get current user error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const updateCurrentUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const auth = req.auth;
+    if (!auth?.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!isPlainObject(req.body)) {
+      return res.status(400).json({ message: "Request body must be an object" });
+    }
+
+    const allowedFields = [
+      "fullName",
+      "email",
+      "phone",
+      "dateOfBirth",
+      "gender",
+      "avatarUrl",
+      "githubUrl",
+      "linkedinUrl",
+      "facebookUrl",
+      "portfolioUrl",
+      "studentId",
+      "studentID",
+    ];
+
+    const unknownFields = Object.keys(req.body).filter(
+      (field) => !allowedFields.includes(field),
+    );
+
+    if (unknownFields.length > 0) {
+      return res.status(400).json({
+        message: `Field không hợp lệ: ${unknownFields.join(", ")}`,
+      });
+    }
+
+    const user = await User.findById(auth.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const fullName = getTrimmedOptionalString(req.body, "fullName");
+    if (fullName !== undefined) {
+      if (!fullName) {
+        return res.status(400).json({ message: "Họ và tên không được để trống." });
+      }
+      user.fullName = fullName;
+    }
+
+    const email = getTrimmedOptionalString(req.body, "email");
+    if (email !== undefined) {
+      if (!email || !email.includes("@")) {
+        return res.status(400).json({ message: "Email không hợp lệ." });
+      }
+
+      const normalizedEmail = normalizeEmail(email);
+      const existingEmailOwner = await User.findOne({
+        _id: { $ne: user._id },
+        $or: [
+          { "normalAuth.email": normalizedEmail },
+          { "contactInfo.email": normalizedEmail },
+        ],
+      })
+        .select("_id")
+        .lean();
+
+      if (existingEmailOwner) {
+        return res.status(409).json({ message: "Email is already registered" });
+      }
+
+      user.contactInfo = user.contactInfo || ({ email: normalizedEmail } as any);
+      user.contactInfo.email = normalizedEmail;
+
+      if (user.authMethod === "normal_auth" && user.normalAuth) {
+        user.normalAuth.email = normalizedEmail;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "dateOfBirth")) {
+      const rawDate = req.body.dateOfBirth;
+      if (rawDate === null || rawDate === undefined || rawDate === "") {
+        user.dateOfBirth = undefined;
+      } else {
+        const parsedDate = new Date(String(rawDate));
+        if (Number.isNaN(parsedDate.getTime())) {
+          return res.status(400).json({ message: "Ngày sinh không hợp lệ." });
+        }
+        user.dateOfBirth = parsedDate;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "gender")) {
+      user.gender = normalizeGenderInput(req.body.gender);
+    }
+
+    const avatarUrl = getTrimmedOptionalString(req.body, "avatarUrl");
+    if (avatarUrl !== undefined) {
+      user.avatarUrl = avatarUrl || undefined;
+    }
+
+    user.contactInfo = user.contactInfo || ({ email: user.normalAuth?.email || "" } as any);
+    assignOptionalContactField(user.contactInfo as any, "phone", getTrimmedOptionalString(req.body, "phone"));
+    assignOptionalContactField(user.contactInfo as any, "githubUrl", getTrimmedOptionalString(req.body, "githubUrl"));
+    assignOptionalContactField(user.contactInfo as any, "linkedinUrl", getTrimmedOptionalString(req.body, "linkedinUrl"));
+    assignOptionalContactField(user.contactInfo as any, "facebookUrl", getTrimmedOptionalString(req.body, "facebookUrl"));
+    assignOptionalContactField(user.contactInfo as any, "portfolioUrl", getTrimmedOptionalString(req.body, "portfolioUrl"));
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Cập nhật thông tin cá nhân thành công.",
+      user: sanitizeUser(user),
+    });
+  } catch (error: any) {
+    if (error instanceof UserProfileValidationError) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error("Update current user error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

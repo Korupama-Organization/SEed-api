@@ -8,6 +8,7 @@ import {
 } from "../dto/update-candidate-profile.dto";
 import { Types } from "mongoose";
 import { Skill } from "../models/Skill";
+import { User } from "../models/User";
 
 const PROFILE_UPDATABLE_FIELDS: (keyof UpdateCandidateProfileDto)[] = [
   "academicInfo",
@@ -42,7 +43,49 @@ const hasNonEmptyString = (value: unknown): boolean => {
   return typeof value === "string" && value.trim().length > 0;
 };
 
+const hasDateValue = (value: unknown): boolean => {
+  if (value instanceof Date) {
+    return !Number.isNaN(value.getTime());
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return !Number.isNaN(new Date(value).getTime());
+  }
+
+  return false;
+};
+
 const PROFILE_COMPLETION_RULES: CompletionRule[] = [
+  {
+    field: "basicInfo.fullName",
+    warning: "Thiếu họ và tên trong thông tin cơ bản.",
+    isComplete: (profile) => hasNonEmptyString(profile?.basicInfo?.fullName),
+  },
+  {
+    field: "basicInfo.studentId",
+    warning: "Thiếu mã số sinh viên trong thông tin cơ bản.",
+    isComplete: (profile) => hasNonEmptyString(profile?.basicInfo?.studentId),
+  },
+  {
+    field: "basicInfo.email",
+    warning: "Thiếu email trong thông tin cơ bản.",
+    isComplete: (profile) => hasNonEmptyString(profile?.basicInfo?.email),
+  },
+  {
+    field: "basicInfo.phone",
+    warning: "Thiếu số điện thoại trong thông tin cơ bản.",
+    isComplete: (profile) => hasNonEmptyString(profile?.basicInfo?.phone),
+  },
+  {
+    field: "basicInfo.birthDate",
+    warning: "Thiếu ngày sinh trong thông tin cơ bản.",
+    isComplete: (profile) => hasDateValue(profile?.basicInfo?.birthDate),
+  },
+  {
+    field: "basicInfo.gender",
+    warning: "Thiếu giới tính trong thông tin cơ bản.",
+    isComplete: (profile) => hasNonEmptyString(profile?.basicInfo?.gender),
+  },
   {
     field: "academicInfo.university",
     warning: "Thiếu trường đại học trong academicInfo.",
@@ -702,61 +745,33 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
 
     const existingProfile = await CandidateProfile.findOne({
       userId: userObjectId,
-    }).lean();
+    })
+      .select("_id")
+      .lean();
 
-    let updatedProfile = null;
-    let updateMeta: { matchedCount: number; modifiedCount: number } | null =
-      null;
-    if (existingProfile) {
-      const updateResult = await CandidateProfile.updateOne(
-        { userId: userObjectId },
-        {
-          $set: profilePayload,
-        },
-        {
-          runValidators: true,
-        },
-      );
+    const updatedProfile = await CandidateProfile.findOneAndUpdate(
+      { userId: userObjectId },
+      {
+        $setOnInsert: { userId: userObjectId },
+        $set: profilePayload,
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
+    )
+      .populate({
+        path: "technicalSkills.skillId",
+        select: "_id skill_name category",
+      })
+      .lean();
 
-      updateMeta = {
-        matchedCount: updateResult.matchedCount,
-        modifiedCount: updateResult.modifiedCount,
-      };
-
-      updatedProfile = await findProfileForResponse(userObjectId);
-    }
-
-    if (!updatedProfile) {
-      const canInitializeProfile =
-        Object.prototype.hasOwnProperty.call(profilePayload, "academicInfo") &&
-        Object.prototype.hasOwnProperty.call(
-          profilePayload,
-          "introductionQuestions",
-        );
-
-      if (!canInitializeProfile) {
-        return res.status(400).json({
-          error:
-            "CandidateProfile chưa tồn tại. Cần gửi đầy đủ academicInfo và introductionQuestions để khởi tạo profile.",
-        });
-      }
-
-      const createdProfile = await CandidateProfile.create({
-        userId: userObjectId,
-        ...profilePayload,
-      });
-
-      updatedProfile = await CandidateProfile.findById(createdProfile._id)
-        .populate({
-          path: "technicalSkills.skillId",
-          select: "_id skill_name category",
-        })
-        .lean();
-      updateMeta = {
-        matchedCount: 0,
-        modifiedCount: 1,
-      };
-    }
+    const updateMeta = {
+      matchedCount: existingProfile ? 1 : 0,
+      modifiedCount: 1,
+    };
 
     if (!updatedProfile?._id) {
       return res.status(500).json({
@@ -848,7 +863,7 @@ export const getMyCandidateProfile = async (req: Request, res: Response) => {
     const profile = await findProfileForResponse(userObjectId);
 
     if (!profile) {
-      return res.status(404).json({ message: "Candidate profile not found", data: null });
+      return res.status(200).json({ message: "Candidate profile not found", data: null });
     }
 
     // collect project and work experience skill ids
@@ -908,11 +923,24 @@ export const getMyCandidateProfileCompletion = async (
 
   try {
     const userObjectId = new Types.ObjectId(authReq.auth.userId);
-    const profile = await CandidateProfile.findOne({
-      userId: userObjectId,
-    }).lean();
+    const [profile, user] = await Promise.all([
+      CandidateProfile.findOne({ userId: userObjectId }).lean(),
+      User.findById(userObjectId).lean(),
+    ]);
 
-    const completionData = evaluateProfileCompletion(profile);
+    const completionSubject = {
+      ...(profile || {}),
+      basicInfo: {
+        fullName: user?.fullName,
+        studentId: user?.studentID,
+        email: user?.contactInfo?.email,
+        phone: user?.contactInfo?.phone,
+        birthDate: user?.dateOfBirth,
+        gender: user?.gender,
+      },
+    };
+
+    const completionData = evaluateProfileCompletion(completionSubject);
 
     return res.status(200).json({
       message: "Đánh giá độ hoàn thành CandidateProfile thành công.",

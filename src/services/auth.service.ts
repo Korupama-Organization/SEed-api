@@ -23,7 +23,12 @@ interface NewbieProfileResponse {
   message: "Vui lòng tạo profile công ty";
 }
 
+interface CandidateProfileResponse {
+  user: Record<string, unknown>;
+}
+
 export type AuthProfileResponse =
+  | CandidateProfileResponse
   | ExistingCompanyProfileResponse
   | NewbieProfileResponse;
 
@@ -52,6 +57,12 @@ export const getProfile = async (
   const user = await User.findById(userId);
   if (!user) {
     throw new AuthServiceError("User not found", 404);
+  }
+
+  if (user.role === "candidate") {
+    return {
+      user: sanitizeUser(user),
+    };
   }
 
   // Inject them CompanyMember model in auth flow to resolve company membership from /auth/me
