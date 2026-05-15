@@ -11,6 +11,7 @@ export interface CreateJobDto {
     jobType: string;
   };
   requirements: {
+    skills?: string[];
     requiredSkills: string[];
     preferredSkills: string[];
     requiredEducation: string;
