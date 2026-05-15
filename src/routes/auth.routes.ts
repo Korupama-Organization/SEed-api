@@ -7,6 +7,7 @@ import {
     registerHrUser,
     refreshAccessToken,
     temporaryPasswordEncryption,
+    updateCurrentUser,
 } from '../controllers/auth.controller';
 import { authRateLimiter } from '../middlewares/auth-rate-limit.middleware';
 import { requireAuth } from '../middlewares/auth.middleware';
@@ -203,6 +204,7 @@ router.post('/refresh', authRateLimiter, refreshAccessToken);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/me', requireAuth, getCurrentUser);
+router.patch('/me', requireAuth, updateCurrentUser);
 
 /**
  * @swagger

@@ -14,6 +14,7 @@ export interface IContactInfo {
     githubUrl?: string;
     linkedinUrl?: string;
     facebookUrl?: string;
+    portfolioUrl?: string;
 }
 export interface IUser extends Document {
     role: 'candidate' | 'recruiter' | 'admin';
@@ -45,6 +46,7 @@ const ContactInfoSchema = new Schema<IContactInfo>(
         githubUrl: String,
         linkedinUrl: String,  
         facebookUrl: String,
+        portfolioUrl: String,
     },
     { _id: false }
 );
