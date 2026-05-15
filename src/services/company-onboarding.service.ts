@@ -1,4 +1,4 @@
-import { ClientSession, startSession } from "mongoose";
+import { ClientSession, FilterQuery, startSession } from "mongoose";
 import { CreateCompanyDto } from "../dto/create-company.dto";
 import { UpdateCompanyDto } from "../dto/update-company.dto";
 import { Company, ICompany } from "../models/Company";
@@ -31,6 +31,22 @@ export type UserCompanyStatusResponse =
   | ExistingMemberProfileResponse
   | NewbieProfileResponse;
 
+interface CompaniesQuery {
+  page?: string;
+  limit?: string;
+  search?: string;
+}
+
+interface ListCompaniesResult {
+  companies: ICompany[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export class CompanyOnboardingError extends Error {
   statusCode: number;
 
@@ -57,6 +73,63 @@ const buildShortName = (name: string): string => {
   }
 
   return compact.slice(0, 30);
+};
+
+const parsePositiveInteger = (
+  value: string | undefined,
+  defaultValue: number,
+  fieldName: string,
+): number => {
+  const parsed = parseInt(value || `${defaultValue}`, 10);
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    throw new CompanyOnboardingError(`${fieldName} phải là số nguyên dương`, 400);
+  }
+
+  return parsed;
+};
+
+const escapeRegex = (value: string): string => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const buildRegex = (value: string): RegExp => {
+  return new RegExp(escapeRegex(value.trim()), "i");
+};
+
+export const listCompanies = async (
+  query: CompaniesQuery,
+): Promise<ListCompaniesResult> => {
+  const page = parsePositiveInteger(query.page, 1, "page");
+  const limit = parsePositiveInteger(query.limit, 10, "limit");
+  const skip = (page - 1) * limit;
+
+  const filter: FilterQuery<ICompany> = {};
+  const search = query.search?.trim();
+  if (search) {
+    const regex = buildRegex(search);
+    filter.$or = [
+      { name: regex },
+      { shortName: regex },
+      { websiteUrl: regex },
+      { email: regex },
+      { "location.city": regex },
+    ];
+  }
+
+  const [companies, total] = await Promise.all([
+    Company.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Company.countDocuments(filter),
+  ]);
+
+  return {
+    companies,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const getMyProfileAndCompanyStatus = async (
