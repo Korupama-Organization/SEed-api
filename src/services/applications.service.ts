@@ -6,6 +6,7 @@ import { InterviewApplicationDto } from "../dto/interview-application.dto";
 import { SecondInterviewApplicationDto } from "../dto/second-interview-application.dto";
 import { OfferApplicationDto } from "../dto/offer-application.dto";
 import { HireApplicationDto } from "../dto/hire-application.dto";
+import { RejectApplicationDto } from "../dto/reject-application.dto";
 
 export class ApplicationServiceError extends Error {
   statusCode: number;
@@ -22,15 +23,17 @@ type ApplicationStatus =
   | "ai_interview_completed"
   | "manual_interview_completed"
   | "offered"
-  | "hired";
+  | "hired"
+  | "rejected";
 
 const STATUS_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
-  applied: ["screening_passed"],
-  screening_passed: ["ai_interview_completed"],
-  ai_interview_completed: ["manual_interview_completed"],
-  manual_interview_completed: ["offered"],
-  offered: ["hired"],
+  applied: ["screening_passed", "rejected"],
+  screening_passed: ["ai_interview_completed", "rejected"],
+  ai_interview_completed: ["manual_interview_completed", "rejected"],
+  manual_interview_completed: ["offered", "rejected"],
+  offered: ["hired", "rejected"],
   hired: [],
+  rejected: [],
 };
 
 const buildStatusEntry = (status: ApplicationStatus, note?: string) => {
@@ -302,6 +305,34 @@ export const hireApplication = async (
       decidedBy: toObjectId(decidedBy, "DecidedBy"),
     };
   }
+
+  return application.save();
+};
+
+export const rejectApplication = async (
+  id: string,
+  dto: RejectApplicationDto,
+  decidedBy: string,
+): Promise<IApplication> => {
+  if (!decidedBy) {
+    throw new ApplicationServiceError("DecidedBy is required", 400);
+  }
+
+  assertValidObjectId(decidedBy, "DecidedBy");
+
+  const application = await getApplicationById(id);
+
+  assertNotRejected(application);
+
+  const currentStatus = getLatestStatus(application);
+  assertTransitionAllowed(currentStatus, "rejected");
+
+  application.applicationStatus.push(buildStatusEntry("rejected", dto.note));
+  application.finalDecision = {
+    decision: "reject",
+    decidedAt: new Date(),
+    decidedBy: toObjectId(decidedBy, "DecidedBy"),
+  };
 
   return application.save();
 };

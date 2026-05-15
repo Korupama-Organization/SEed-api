@@ -4,6 +4,7 @@ import {
   hireApplicationHandler,
   interviewApplicationHandler,
   offerApplicationHandler,
+  rejectApplicationHandler,
   secondInterviewApplicationHandler,
   shortlistApplicationHandler,
 } from "../controllers/applications.controller";
@@ -273,6 +274,45 @@ router.patch("/:id/hire", requireAuth, hireApplicationHandler);
 
 /**
  * @swagger
+ * /api/applications/{id}/reject:
+ *   patch:
+ *     summary: Reject an application
+ *     tags: [Applications]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 6800c1a16541f34f61f7b999
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               note:
+ *                 type: string
+ *                 example: Candidate was not selected for this role
+ *     responses:
+ *       200:
+ *         description: Application rejected successfully
+ *       400:
+ *         description: Invalid payload
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Application not found
+ *       500:
+ *         description: Server error
+ */
+router.patch("/:id/reject", requireAuth, rejectApplicationHandler);
+
+/**
+ * @swagger
  * /api/applications:
  *   get:
  *     summary: Get all jobs with candidate's application status
@@ -355,7 +395,7 @@ router.patch("/:id/hire", requireAuth, hireApplicationHandler);
  *                       applicationStatus:
  *                         type: string
  *                         nullable: true
- *                         enum: [applied, screening_passed, ai_interview_completed, manual_interview_completed, offered, hired, null]
+ *                         enum: [applied, screening_passed, ai_interview_completed, manual_interview_completed, offered, hired, rejected, null]
  *                         description: Latest application status, or null if not applied
  *                       applicationId:
  *                         type: string
