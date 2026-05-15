@@ -8,6 +8,7 @@ import { User } from "../models/User";
 import { CandidateProfile } from "../models/CandidateProfile";
 import { Application, IApplication } from "../models/Application";
 import { Counter } from "../models/Counter";
+import { resolveSkillIds } from "./skill-resolution.service";
 
 interface JobsQuery {
   page?: string;
@@ -191,7 +192,7 @@ const createJobDocument = async (
     companyId: Types.ObjectId;
     createdBy: Types.ObjectId;
     basicInfo: CreateJobDto["basicInfo"];
-    requirements: CreateJobDto["requirements"];
+    requirements: IJob["requirements"];
     status: JobStatus;
   },
 ): Promise<IJob> => {
@@ -212,6 +213,25 @@ const createJobDocument = async (
   }
 
   throw new JobsServiceError("Không thể tạo job mới", 500);
+};
+
+const resolveJobRequirementsSkills = async (
+  requirements: Partial<CreateJobDto["requirements"]>,
+): Promise<Record<string, unknown>> => {
+  const resolvedRequirements: Record<string, unknown> = { ...requirements };
+
+  if (Array.isArray(resolvedRequirements.skills)) {
+    resolvedRequirements.requiredSkills = await resolveSkillIds(resolvedRequirements.skills);
+    delete resolvedRequirements.skills;
+  } else if (Array.isArray(resolvedRequirements.requiredSkills)) {
+    resolvedRequirements.requiredSkills = await resolveSkillIds(resolvedRequirements.requiredSkills);
+  }
+
+  if (Array.isArray(resolvedRequirements.preferredSkills)) {
+    resolvedRequirements.preferredSkills = await resolveSkillIds(resolvedRequirements.preferredSkills);
+  }
+
+  return resolvedRequirements;
 };
 
 const assertJobAccess = async (
@@ -829,7 +849,7 @@ export const createJobService = async (
     companyId: companyMember.companyId,
     createdBy: new Types.ObjectId(userId),
     basicInfo: data.basicInfo,
-    requirements: data.requirements,
+    requirements: await resolveJobRequirementsSkills(data.requirements) as unknown as IJob["requirements"],
     status: "draft",
   });
 
@@ -864,7 +884,8 @@ export const updateJobService = async (
     updateData.basicInfo = { ...existingJob.basicInfo, ...jobData.basicInfo };
   }
   if (jobData.requirements) {
-    updateData.requirements = { ...existingJob.requirements, ...jobData.requirements };
+    const resolvedRequirements = await resolveJobRequirementsSkills(jobData.requirements);
+    updateData.requirements = { ...existingJob.requirements, ...resolvedRequirements };
   }
 
   if (Object.keys(updateData).length === 0) {
