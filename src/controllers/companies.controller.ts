@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import {
   CreateCompanyDto,
   validateCreateCompanyDto,
@@ -10,8 +10,36 @@ import {
   createCompanyForNewbie,
   deleteMyCompany,
   getMyCompany,
+  listCompanies,
   updateMyCompany,
 } from "../services/company-onboarding.service";
+
+const getQueryString = (value: unknown): string | undefined => {
+  return typeof value === "string" ? value : undefined;
+};
+
+export const getAllCompanies = async (req: Request, res: Response) => {
+  try {
+    const result = await listCompanies({
+      page: getQueryString(req.query.page) || "1",
+      limit: getQueryString(req.query.limit) || "10",
+      search: getQueryString(req.query.search),
+    });
+
+    return res.status(200).json({
+      message: "Get list companies successfully",
+      data: result.companies,
+      pagination: result.pagination,
+    });
+  } catch (error: any) {
+    if (error instanceof CompanyOnboardingError) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
+    console.error("Get list companies error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const createCompany = async (
   req: AuthenticatedRequest,

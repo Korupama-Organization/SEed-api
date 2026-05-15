@@ -2,12 +2,70 @@ import { Router } from "express";
 import {
   createCompany,
   deleteCompany,
+  getAllCompanies,
   getCompany,
   updateCompany,
 } from "../controllers/companies.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
+
+/**
+ * @swagger
+ * /api/companies:
+ *   get:
+ *     summary: List all company profiles
+ *     tags: [Companies]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *           default: "1"
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: string
+ *           default: "10"
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by name, shortName, websiteUrl, email, or city
+ *     responses:
+ *       200:
+ *         description: Get list companies successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Get list companies successfully
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: number
+ *                     limit:
+ *                       type: number
+ *                     total:
+ *                       type: number
+ *                     totalPages:
+ *                       type: number
+ *       400:
+ *         description: Invalid pagination query
+ *       500:
+ *         description: Server error
+ */
+router.get("/", getAllCompanies);
 
 /**
  * @swagger
