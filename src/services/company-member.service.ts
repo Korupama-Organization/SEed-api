@@ -1,7 +1,10 @@
+import bcrypt from "bcrypt";
 import { CompanyMember, ICompanyMember } from "../models/CompanyMember";
 import { User } from "../models/User";
 import { CreateCompanyMemberDto } from "../dto/create-company-member.dto";
+import { CreateCompanyMemberAuthDto } from "../dto/create-company-member-auth.dto";
 import { UpdateCompanyMemberDto } from "../dto/update-company-member.dto";
+import { UpdateRecruiterProfileDto } from "../dto/update-recruiter-profile.dto";
 
 export class CompanyMemberError extends Error {
   statusCode: number;
@@ -36,10 +39,19 @@ export const listCompanyMembers = async (userId: string) => {
   const companyId = currentMember.companyId;
 
   const members = await CompanyMember.find({ companyId })
-    .populate("userId", "fullName email avatarUrl role status")
+    .populate("userId", "fullName contactInfo avatarUrl role status")
     .sort({ createdAt: -1 });
 
-  return { companyId: String(companyId), members };
+  const mapped = members.map((m) => {
+    const doc = m.toObject();
+    const user = doc.userId as any;
+    return {
+      ...doc,
+      email: user?.contactInfo?.email || null,
+    };
+  });
+
+  return { companyId: String(companyId), members: mapped };
 };
 
 export const getCompanyMemberById = async (
@@ -52,20 +64,22 @@ export const getCompanyMemberById = async (
   let member = await CompanyMember.findOne({
     _id: memberId,
     companyId,
-  }).populate("userId", "fullName email avatarUrl role status");
+  }).populate("userId", "fullName contactInfo avatarUrl role status");
 
   if (!member) {
     member = await CompanyMember.findOne({
       userId: memberId,
       companyId,
-    }).populate("userId", "fullName email avatarUrl role status");
+    }).populate("userId", "fullName contactInfo avatarUrl role status");
   }
 
   if (!member) {
     throw new CompanyMemberError("Thành viên không tồn tại.", 404);
   }
 
-  return member;
+  const doc = member.toObject();
+  const user = doc.userId as any;
+  return { ...doc, email: user?.email || null };
 };
 
 export const createCompanyMember = async (
@@ -122,6 +136,78 @@ export const createCompanyMember = async (
   });
 
   return member;
+};
+
+export const createCompanyMemberWithAuth = async (
+  userId: string,
+  dto: CreateCompanyMemberAuthDto,
+) => {
+  const currentMember = await getCurrentUserMembership(userId);
+  assertManager(currentMember);
+
+  const existingUser = await User.findOne({
+    $or: [
+      { "normalAuth.email": dto.email },
+      { "contactInfo.email": dto.email },
+    ],
+  });
+  if (existingUser) {
+    throw new CompanyMemberError("Email đã được đăng ký.", 409);
+  }
+
+  const passwordHash = await bcrypt.hash(dto.password, 10);
+  const now = new Date();
+
+  const newUser = await User.create({
+    role: "recruiter",
+    authMethod: "normal_auth",
+    status: "active",
+    fullName: dto.fullName,
+    gender: dto.gender,
+    avatarUrl: dto.avatarUrl,
+    normalAuth: {
+      email: dto.email,
+      passwordHash,
+      passwordUpdatedAt: now,
+    },
+    contactInfo: {
+      email: dto.email,
+      phone: dto.phone ?? null,
+      linkedinUrl: dto.linkedinUrl,
+      githubUrl: dto.githubUrl,
+      facebookUrl: dto.facebookUrl,
+    },
+  });
+
+  const defaults = {
+    canCreateJob: false,
+    canUpdateJob: false,
+    canDeleteJob: false,
+    canViewApplications: true,
+    canUpdateApplicationStatus: false,
+    canScheduleInterviews: false,
+  };
+
+  const member = await CompanyMember.create({
+    userId: newUser._id,
+    companyId: currentMember.companyId,
+    membershipRole: dto.membershipRole,
+    jobTitle: dto.jobTitle,
+    permission: dto.permission
+      ? { ...defaults, ...dto.permission }
+      : defaults,
+  });
+
+  const populated = await CompanyMember.findById(member._id)
+    .populate("userId", "fullName contactInfo avatarUrl role status");
+
+  const doc = populated!.toObject();
+  const user = doc.userId as any;
+
+  return {
+    ...doc,
+    email: user?.contactInfo?.email || null,
+  };
 };
 
 export const updateCompanyMember = async (
@@ -181,6 +267,48 @@ export const updateCompanyMember = async (
 
   await member.save();
   return member;
+};
+
+export const updateRecruiterProfile = async (
+  userId: string,
+  dto: UpdateRecruiterProfileDto,
+) => {
+  const currentMember = await getCurrentUserMembership(userId);
+
+  const $set: Record<string, unknown> = {};
+
+  if (dto.fullName !== undefined) $set.fullName = dto.fullName;
+  if (dto.avatarUrl !== undefined) $set.avatarUrl = dto.avatarUrl;
+  if (dto.gender !== undefined) $set.gender = dto.gender;
+  if (dto.dateOfBirth !== undefined) $set.dateOfBirth = new Date(dto.dateOfBirth);
+  if (dto.phone !== undefined) $set["contactInfo.phone"] = dto.phone;
+  if (dto.linkedinUrl !== undefined) $set["contactInfo.linkedinUrl"] = dto.linkedinUrl;
+  if (dto.githubUrl !== undefined) $set["contactInfo.githubUrl"] = dto.githubUrl;
+  if (dto.facebookUrl !== undefined) $set["contactInfo.facebookUrl"] = dto.facebookUrl;
+
+  const updated = await User.findByIdAndUpdate(
+    userId,
+    { $set },
+    { new: true },
+  ).select("fullName contactInfo avatarUrl gender dateOfBirth role status");
+
+  if (dto.membershipRole !== undefined || dto.jobTitle !== undefined) {
+    const memberUpdate: Record<string, unknown> = {};
+    if (dto.membershipRole !== undefined) memberUpdate.membershipRole = dto.membershipRole;
+    if (dto.jobTitle !== undefined) memberUpdate.jobTitle = dto.jobTitle;
+    await CompanyMember.findByIdAndUpdate(currentMember._id, { $set: memberUpdate });
+  }
+
+  const updatedMember = await CompanyMember.findById(currentMember._id)
+    .populate("userId", "fullName contactInfo avatarUrl role status");
+
+  const doc = updatedMember!.toObject();
+  const user = doc.userId as any;
+
+  return {
+    ...doc,
+    email: user?.contactInfo?.email || null,
+  };
 };
 
 export const removeCompanyMember = async (

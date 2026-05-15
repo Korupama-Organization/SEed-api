@@ -58,6 +58,22 @@ interface JobApplicantsResult {
   };
 }
 
+interface CandidateApplicationsResult {
+  jobs: Array<{
+    jobId: string;
+    jobInfo: Record<string, unknown>;
+    applicationStatus: string | null;
+    applicationId: string | null;
+    appliedAt: Date | null;
+  }>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export class JobsServiceError extends Error {
   statusCode: number;
 
@@ -645,6 +661,92 @@ export const getApplicantProfileByJob = async (
       updatedAt: application.updatedAt,
     },
     profile,
+  };
+};
+
+export const getCandidateApplicationsStatus = async (
+  candidateUserId: string,
+  query: JobsQuery,
+): Promise<CandidateApplicationsResult> => {
+  const pageNum = parsePositiveInteger(query.page, 1, "page");
+  const limitNum = parsePositiveInteger(query.limit, 10, "limit");
+  const skip = (pageNum - 1) * limitNum;
+
+  // Fetch all published jobs
+  const [jobs, total] = await Promise.all([
+    Job.find({ status: 'published' })
+      .select("_id companyId slug basicInfo status createdAt updatedAt requirements")
+      .populate("companyId", "name logoUrl")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Job.countDocuments({ status: 'published' }),
+  ]);
+
+  if (jobs.length === 0) {
+    return {
+      jobs: [],
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    };
+  }
+
+  const jobIds = jobs.map((job: any) => job._id);
+
+  // Fetch all applications by candidate for these jobs
+  const candidateApplications = await Application.find({
+    candidateUserId: new Types.ObjectId(candidateUserId),
+    jobId: { $in: jobIds },
+  })
+    .select("jobId applicationStatus createdAt")
+    .lean();
+
+  // Map applications by jobId for quick lookup
+  const appsByJobId = new Map(
+    candidateApplications.map((app: any) => [
+      app.jobId.toString(),
+      {
+        applicationId: app._id.toString(),
+        latestStatus: getLatestApplicationStatus(app as unknown as IApplication),
+        appliedAt: app.createdAt,
+      },
+    ])
+  );
+
+  // Build response with job info + application status
+  const jobsWithAppStatus = jobs.map((job: any) => {
+    const jobIdStr = job._id.toString();
+    const appInfo = appsByJobId.get(jobIdStr);
+
+    return {
+      jobId: jobIdStr,
+      jobInfo: {
+        slug: job.slug || jobIdStr,
+        companyId: job.companyId,
+        basicInfo: job.basicInfo,
+        status: job.status,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
+      },
+      applicationStatus: appInfo?.latestStatus || null,
+      applicationId: appInfo?.applicationId || null,
+      appliedAt: appInfo?.appliedAt || null,
+    };
+  });
+
+  return {
+    jobs: jobsWithAppStatus,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
   };
 };
 

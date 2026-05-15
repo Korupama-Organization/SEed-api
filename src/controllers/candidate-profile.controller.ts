@@ -836,6 +836,66 @@ export const updateMyCandidateProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const getMyCandidateProfile = async (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+
+  if (!authReq.auth?.userId) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  try {
+    const userObjectId = new Types.ObjectId(authReq.auth.userId);
+    const profile = await findProfileForResponse(userObjectId);
+
+    if (!profile) {
+      return res.status(404).json({ message: "Candidate profile not found", data: null });
+    }
+
+    // collect project and work experience skill ids
+    const projectSkillIds = Array.isArray(profile.projects)
+      ? profile.projects.flatMap((project: any) =>
+          Array.isArray(project?.technologies)
+            ? project.technologies.map((v: unknown) => String(v))
+            : [],
+        )
+      : [];
+
+    const workExperienceSkillIds = Array.isArray(profile.workExperiences)
+      ? profile.workExperiences.flatMap((we: any) =>
+          Array.isArray(we?.technologiesUsed)
+            ? we.technologiesUsed.map((v: unknown) => String(v))
+            : [],
+        )
+      : [];
+
+    const uniqueProjectSkillIds = [...new Set(projectSkillIds)];
+    const uniqueWorkExperienceSkillIds = [...new Set(workExperienceSkillIds)];
+
+    const [projectTechnologySkills, workExperienceTechnologySkills] =
+      await Promise.all([
+        uniqueProjectSkillIds.length > 0
+          ? Skill.find({ _id: { $in: uniqueProjectSkillIds } }, { _id: 1, skill_name: 1, category: 1 }).lean()
+          : [],
+        uniqueWorkExperienceSkillIds.length > 0
+          ? Skill.find({ _id: { $in: uniqueWorkExperienceSkillIds } }, { _id: 1, skill_name: 1, category: 1 }).lean()
+          : [],
+      ]);
+
+    const profileForResponse = {
+      ...profile,
+      projectTechnologySkills: projectTechnologySkills || [],
+      workExperienceTechnologySkills: workExperienceTechnologySkills || [],
+    };
+
+    const response = buildProfileResponse(profileForResponse);
+
+    return res.status(200).json({ message: "Candidate profile fetched successfully", data: response });
+  } catch (error: any) {
+    console.error("Get my candidate profile error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const getMyCandidateProfileCompletion = async (
   req: Request,
   res: Response,
