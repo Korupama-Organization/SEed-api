@@ -2,7 +2,7 @@ import { application } from "express";
 import { model, Schema, Types, Document, ObjectId } from "mongoose";
 
 export interface IApplicationStatus {
-    status: 'applied' | 'screening_passed' | 'ai_interview_completed' | 'manual_interview_completed' | 'offered' | 'hired';
+    status: 'applied' | 'screening_passed' | 'ai_interview_completed' | 'manual_interview_completed' | 'offered' | 'hired' | 'rejected';
     note: string; // Optional field to provide additional information about the status
     createdAt: Date;
     updatedAt: Date;
@@ -35,7 +35,7 @@ export interface IApplication extends Document {
 const ApplicationStatusSchema = new Schema<IApplicationStatus>({
     status: {
         type: String,
-        enum: ['applied', 'screening_passed', 'ai_interview_completed', 'manual_interview_completed', 'offered', 'hired']
+        enum: ['applied', 'screening_passed', 'ai_interview_completed', 'manual_interview_completed', 'offered', 'hired', 'rejected']
     },
     note: {
         type: String,
@@ -76,4 +76,3 @@ const ApplicationSchema = new Schema<IApplication>(
 ApplicationSchema.index({ candidateUserId: 1, jobId: 1 }, { unique: true });
 
 export const Application = model<IApplication>('Application', ApplicationSchema);
-
