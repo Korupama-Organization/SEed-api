@@ -13,7 +13,8 @@ type ApplicationStatus =
   | "ai_interview_completed"
   | "manual_interview_completed"
   | "offered"
-  | "hired";
+  | "hired"
+  | "rejected";
 
 type ChartPeriod = "week" | "month";
 
@@ -22,7 +23,8 @@ type StatusBucketKey =
   | "screening"
   | "interviewing"
   | "offered"
-  | "hired";
+  | "hired"
+  | "rejected";
 
 type StatusBucket = {
   key: StatusBucketKey;
@@ -46,6 +48,7 @@ const STATUS_LABELS: Record<ApplicationStatus, string> = {
   manual_interview_completed: "Hoàn tất phỏng vấn",
   offered: "Đã gửi offer",
   hired: "Đã tuyển",
+  rejected: "Từ chối tuyển dụng",
 };
 
 const STATUS_BUCKETS: StatusBucket[] = [
@@ -62,6 +65,7 @@ const STATUS_BUCKETS: StatusBucket[] = [
   },
   { key: "offered", label: "Offer", statuses: ["offered"] },
   { key: "hired", label: "Đã tuyển", statuses: ["hired"] },
+  { key: "rejected", label: "Từ chối tuyển dụng", statuses: ["rejected"] },
 ];
 
 const ACTIVE_JOB_STATUSES = ["published", "open"];
@@ -149,7 +153,8 @@ const getLatestStatus = (application: any): ApplicationStatus => {
     latest === "ai_interview_completed" ||
     latest === "manual_interview_completed" ||
     latest === "offered" ||
-    latest === "hired"
+    latest === "hired" ||
+    latest === "rejected"
   ) {
     return latest;
   }
@@ -162,7 +167,10 @@ const isApplicationRejected = (application: any): boolean => {
 };
 
 const isQualifiedApplication = (application: any): boolean => {
-  return getLatestStatus(application) !== "applied";
+  return (
+    !isApplicationRejected(application) &&
+    getLatestStatus(application) !== "applied"
+  );
 };
 
 const countMonthGrowth = (applications: any[], now: Date): number => {
