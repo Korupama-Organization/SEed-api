@@ -1,5 +1,5 @@
 node_modules
 .env
 dist
-./studuy-api
+./SEeds-api
 .DS_Store

@@ -27,7 +27,7 @@ app.use(
   "/api-docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: "Studuy API Docs",
+    customSiteTitle: "SEeds API Docs",
     swaggerOptions: { persistAuthorization: false },
   }),
 );
@@ -38,7 +38,7 @@ app.get("/api-docs.json", (_req, res) => {
 });
 
 app.get("/", (_req: Request, res: Response) => {
-  res.json({ status: "ok", message: "STUDUY BACKEND API" });
+  res.json({ status: "ok", message: "SEeds BACKEND API" });
 });
 
 // ── TODO: Register routes ─────────────────────────────────────────────────────

@@ -79,7 +79,7 @@ Nhấn **Connect** → Camera/Mic sẽ tự kết nối vào room.
 
 ---
 
-## Cấu hình `.env` cho backend (studuy-api)
+## Cấu hình `.env` cho backend (SEeds-api)
 
 Thêm vào file `.env` ở root project:
 

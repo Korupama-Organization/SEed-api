@@ -1,5 +1,5 @@
 {
-    "name": "studuy-api",
+    "name": "SEeds-api",
     "version": "1.0.0",
     "main": "dist/server.js",
     "scripts": {

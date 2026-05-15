@@ -1,6 +1,6 @@
-# Studuy Backend API
+# SEeds Backend API
 
-Backend API for Studuy LMS MVP.
+Backend API for SEeds LMS MVP.
 
 ## Quick Start
 
@@ -63,31 +63,102 @@ Coverage includes representative API flow contracts for:
 ## API Docs
 
 - Swagger UI: `/api-docs`
-- OpenAPI JSON: `/api-docs.json`
+# SEeds API (Backend)
 
-## Livestream Operations Runbook
+Backend cho SEeds — API dịch vụ chính cho quản lý jobs, applications, candidate profiles và livestream.
 
-- Backend operations/compliance guide: `docs/livestream-operations-runbook.md`
+## Tóm tắt
 
-## Operational Troubleshooting
+Ứng dụng này cung cấp các API cho:
+- Quản lý tuyển dụng (jobs)
+- Ứng viên: hồ sơ ứng viên, dashboard, trạng thái ứng tuyển
+- Quản lý application và phiên phỏng vấn
+- Tích hợp livestream (module riêng)
 
-1. Startup fails with missing env variables
-- Run with a complete `.env` matching required keys in runtime config.
-- Check error log output for missing keys from startup validation.
+Stack chính: Node.js, TypeScript, Express, MongoDB (Mongoose). Swagger/OpenAPI cho tài liệu API.
 
-2. Test failures around auth/rate limits
-- Ensure `tests/setup.ts` defaults are loaded by Jest.
-- Re-run targeted suites before full run to isolate failures.
+## Yêu cầu
 
-3. Build failures
-- Run `npm run build` first to surface strict TypeScript errors.
-- Fix type mismatches before retrying test/coverage commands.
+- Node.js 18+ (hoặc phiên bản tương thích với project)
+- npm hoặc pnpm
+- MongoDB (local hoặc URI từ cloud)
 
-## MVP Validation Sequence
+## Cài đặt & cấu hình
 
-For release preflight, run in order:
+1. Cài dependencies:
+
 ```bash
-npm run build
-npm run test:smoke
-npm run test:coverage
+npm install
 ```
+
+2. Tạo file môi trường:
+
+- Sao chép file mẫu:
+
+```bash
+cp .env.example .env
+```
+
+- Điền giá trị cho các biến môi trường bắt buộc (DB, JWT secret, Redis, ...).
+
+3. (Tùy chọn) Kiểm tra tệp `src/utils/env-validation.ts` để biết danh sách biến cần thiết tại runtime.
+
+## Scripts hữu dụng
+
+- `npm run dev` — Chạy dev server (nodemon + ts-node).
+- `npm run build` — Biên dịch TypeScript sang `dist/`.
+- `npm run start` — Chạy phiên bản đã build.
+- `npm run test` — Chạy toàn bộ test.
+- `npm run test:smoke` — Chạy smoke tests (gồm các luồng chính).
+- `npm run test:coverage` — Chạy test với báo cáo coverage.
+
+Xem `package.json` để biết danh sách đầy đủ các script.
+
+## Chạy trong môi trường phát triển
+
+```bash
+npm run dev
+```
+
+Server mặc định lắng nghe cổng được cấu hình trong `.env` (xem `src/constants.ts` / `src/server.ts`).
+
+## Tài liệu API (Swagger)
+
+- Swagger UI: `GET /api-docs`
+- OpenAPI JSON: `GET /api-docs.json`
+
+Một số endpoint quan trọng:
+- `GET /api/candidate-profiles/me` — Lấy hồ sơ ứng viên hiện tại (đã thêm gần đây).
+- `PATCH /api/candidate-profiles/me` — Cập nhật hồ sơ ứng viên.
+- `GET /api/applications` — Lấy danh sách job kèm trạng thái ứng tuyển của ứng viên (theo token).
+- Các endpoint quản lý job: `/api/jobs` và `/api/jobs/:id/applicants` (xem docs đầy đủ trên Swagger).
+
+## Phát triển & đóng góp
+
+- Code style: Giữ consistent với TypeScript/ESLint cấu hình trong repo.
+- Khi thêm endpoint mới: bổ sung Swagger JSDoc trong file route tương ứng.
+- Nếu cần chạy local MongoDB, đảm bảo `MONGODB_URI` trong `.env` trỏ tới instance local.
+
+Quy trình gợi ý:
+1. Tạo branch tính năng: `git checkout -b feat/your-feature`
+2. Viết code + tests
+3. Chạy `npm run build` và `npm run test`
+4. Tạo PR kèm mô tả và test evidence
+
+## Debug & Troubleshooting nhanh
+
+- Nếu server báo lỗi biến môi trường thiếu: kiểm tra `.env` và `src/utils/env-validation.ts`.
+- Nếu gặp lỗi TypeScript: chạy `npm run build` để xem chi tiết lỗi tĩnh.
+- Lỗi khi tạo job: kiểm tra quyền của user (`CompanyMember` và permission) và payload hợp lệ theo `dto/create-job.dto.ts`.
+
+## Tài liệu nội bộ
+
+- Docs nâng cao liên quan livestream: [docs/livestream-operations-runbook.md](docs/livestream-operations-runbook.md)
+
+## Liên hệ
+
+Nếu cần hỗ trợ thêm hoặc muốn mình cập nhật README theo phong cách khác, cho mình biết yêu cầu cụ thể (ví dụ: thêm badges, hướng dẫn deploy, ví dụ curl cho endpoints, v.v.).
+
+---
+
+File chính để bắt đầu: `src/server.ts`, routes nằm trong `src/routes/`.

@@ -4,9 +4,9 @@ const options: swaggerJSDoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Studuy API",
+      title: "SEeds API",
       version: "1.0.0",
-      description: "REST API documentation for Studuy LMS platform",
+      description: "REST API documentation for SEeds LMS platform",
     },
     servers: [
       {
