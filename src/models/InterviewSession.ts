@@ -34,7 +34,7 @@ interface IFinalReport {
 }
 
 export interface IInterviewSession extends Document {
-  jobId: Types.ObjectId;
+  jobId?: Types.ObjectId | null;
   candidateId: Types.ObjectId;
   sessionType: SessionType;
   interviewMode: InterviewMode;
@@ -83,7 +83,14 @@ const FinalReportSchema = new Schema<IFinalReport>(
 
 const InterviewSessionSchema = new Schema<IInterviewSession>(
   {
-    jobId: { type: Schema.Types.ObjectId, ref: "Job", required: true },
+    jobId: {
+      type: Schema.Types.ObjectId,
+      ref: "Job",
+      required: function (this: IInterviewSession) {
+        return this.sessionType === "real";
+      },
+      default: null,
+    },
     candidateId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     sessionType: { type: String, enum: ["real", "mock"], required: true },
     interviewMode: {

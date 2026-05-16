@@ -11,6 +11,7 @@ import {
   IsString,
   IsUrl,
   ValidateNested,
+  ValidateIf,
   validate,
 } from "class-validator";
 
@@ -86,9 +87,14 @@ class FinalReportDto {
 }
 
 export class CreateInterviewSessionDto {
+  @ValidateIf(
+    (payload) =>
+      payload.sessionType === "real" ||
+      (payload.jobId !== undefined && payload.jobId !== null),
+  )
   @IsNotEmpty()
   @IsMongoId()
-  jobId!: string;
+  jobId?: string | null;
 
   @IsNotEmpty()
   @IsMongoId()

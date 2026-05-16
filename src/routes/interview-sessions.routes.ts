@@ -26,7 +26,6 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - jobId
  *               - candidateId
  *               - sessionType
  *               - interviewMode
@@ -36,6 +35,7 @@ const router = Router();
  *             properties:
  *               jobId:
  *                 type: string
+ *                 description: Required when sessionType is real; can be null for mock.
  *                 example: 6800c1a16541f34f61f7b111
  *               candidateId:
  *                 type: string
