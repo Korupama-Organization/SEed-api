@@ -155,10 +155,3 @@ Quy trình gợi ý:
 
 - Docs nâng cao liên quan livestream: [docs/livestream-operations-runbook.md](docs/livestream-operations-runbook.md)
 
-## Liên hệ
-
-Nếu cần hỗ trợ thêm hoặc muốn mình cập nhật README theo phong cách khác, cho mình biết yêu cầu cụ thể (ví dụ: thêm badges, hướng dẫn deploy, ví dụ curl cho endpoints, v.v.).
-
----
-
-File chính để bắt đầu: `src/server.ts`, routes nằm trong `src/routes/`.
